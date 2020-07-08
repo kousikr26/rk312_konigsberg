@@ -14,7 +14,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from datetime import datetime as dt
-
+import pygraphviz as pgv
 # Stylesheet
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -22,7 +22,6 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 # Load  Data
 df =pd.read_csv("../data/data.csv")
-
 #Color scale of edges
 viridis = cm.get_cmap('viridis', 12)
 # Define Color
@@ -39,14 +38,21 @@ df['Receiver_node']=df['Receiver'].apply(lambda x:list(nodes).index(x))
 # Plot Graph of calls
 def plot_network(df):
     nodes=np.union1d(df['Caller'].unique(),df['Receiver'].unique())
-    G = nx.random_geometric_graph(nodes.shape[0], 0.125)
+    
+    G=nx.DiGraph()
     df['Caller_node']=df['Caller'].apply(lambda x:list(nodes).index(x))
     df['Receiver_node']=df['Receiver'].apply(lambda x:list(nodes).index(x))
+    def make_graph(x):
+        G.add_edge(x["Caller_node"],x["Receiver_node"])
+    print(len(df))
+    df.apply(make_graph,axis=1)
+    pos=nx.nx_agraph.graphviz_layout(G)
+    
     # Add Edges to Plot
     edge_trace=[]
     def add_coords(x): 
-        x0,y0=G.nodes[x['Caller_node']]['pos']
-        x1,y1=G.nodes[x['Receiver_node']]['pos']
+        x0,y0=pos[x['Caller_node']]
+        x1,y1=pos[x['Receiver_node']]
         edge_trace.append(dict(type='scatter',
         x=[x0,x1], y=[y0,y1],
         line=dict(width=0.5, color='rgba'+str(x['Dura_color'])),
@@ -56,8 +62,8 @@ def plot_network(df):
     ## adding points
     node_x = []
     node_y = []
-    for node in G.nodes():
-        x, y = G.nodes[node]['pos']
+    for node in pos:
+        x, y = pos[node]
         node_x.append(x)
         node_y.append(y)
     node_trace = go.Scatter(
@@ -121,7 +127,6 @@ app.layout = html.Div(children=[
 def update_output_div(selected_date,selected_number):
     print('Callback Called')
     filtered_df=df[df['Date']==pd.to_datetime(selected_date)&(df['Caller']==selected_number)].reset_index(drop=True)
-
     return plot_network(filtered_df)
 
 
