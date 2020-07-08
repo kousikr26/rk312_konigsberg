@@ -12,7 +12,7 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from datetime import datetime as dt
 
 # Stylesheet
@@ -27,7 +27,13 @@ df =pd.read_csv("../data/data.csv")
 viridis = cm.get_cmap('viridis', 12)
 # Define Color
 df['Dura_color']=(df['Duration']/df['Duration'].max()).apply(viridis)
+
+#global usage
+
+nodes=list(np.union1d(df['Caller'].unique(),df['Receiver'].unique()))
 df['Date']=df['Date'].apply(pd.to_datetime).dt.date
+df['Caller_node']=df['Caller'].apply(lambda x:list(nodes).index(x))
+df['Receiver_node']=df['Receiver'].apply(lambda x:list(nodes).index(x))
 
 #### Plots
 # Plot Graph of calls
@@ -100,19 +106,27 @@ app.layout = html.Div(children=[
         initial_visible_month=dt(2020, 6, 5),
         date=str(dt(2020, 6, 5, 0, 0, 0 )) 
     ),
+    dcc.Dropdown(
+        id='calls-dropdown',
+        options = [{'label': k, 'value': k} for k in nodes],
+        value=''
+    )
 ])
 
 # Callbacks
 @app.callback(
     Output(component_id='network-plot', component_property='figure'),
-    [Input(component_id='date-picker', component_property='date')]
+    [Input(component_id='date-picker', component_property='date'),Input(component_id='calls-dropdown', component_property='value')]
 )
-def update_output_div(selected_date):
+def update_output_div(selected_date,selected_number):
     print('Callback Called')
-    filtered_df=df[df['Date']==pd.to_datetime(selected_date)].reset_index(drop=True)
+    filtered_df=df[df['Date']==pd.to_datetime(selected_date)&(df['Caller']==selected_number)].reset_index(drop=True)
+
     return plot_network(filtered_df)
+
 
 
 # Run Server
 if __name__ == '__main__':
     app.run_server(debug=True,port=8000)
+
