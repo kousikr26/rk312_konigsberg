@@ -1,10 +1,10 @@
 # To add a new cell, type '# %%'
 # To add a new markdown cell, type '# %% [markdown]'
 # %%
+# Import Libraries
 import pandas as pd
 import numpy as np
 import json
-import numpy as np
 import networkx as nx
 import plotly.graph_objects as go
 from matplotlib import cm
@@ -12,28 +12,37 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from datetime import datetime as dt
 
-# %%
+# Stylesheet
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
-# %%
+# Load  Data
 df =pd.read_csv("../data/data.csv")
 
+#Color scale of edges
 viridis = cm.get_cmap('viridis', 12)
+# Define Color
 df['Dura_color']=(df['Duration']/df['Duration'].max()).apply(viridis)
-df['Date']=df['Date'].apply(pd.to_datetime).dt.date
 
-# %%
+#global usage
+
+nodes=list(np.union1d(df['Caller'].unique(),df['Receiver'].unique()))
+df['Date']=df['Date'].apply(pd.to_datetime).dt.date
+df['Caller_node']=df['Caller'].apply(lambda x:list(nodes).index(x))
+df['Receiver_node']=df['Receiver'].apply(lambda x:list(nodes).index(x))
+
+#### Plots
+# Plot Graph of calls
 def plot_network(df):
     nodes=np.union1d(df['Caller'].unique(),df['Receiver'].unique())
-    print(df.head())
     G = nx.random_geometric_graph(nodes.shape[0], 0.125)
     df['Caller_node']=df['Caller'].apply(lambda x:list(nodes).index(x))
     df['Receiver_node']=df['Receiver'].apply(lambda x:list(nodes).index(x))
+    # Add Edges to Plot
     edge_trace=[]
     def add_coords(x): 
         x0,y0=G.nodes[x['Caller_node']]['pos']
@@ -76,7 +85,7 @@ def plot_network(df):
     return fig
 
 
-# %%
+# Layout of App
 app.layout = html.Div(children=[
     html.H1(children='CDR Analyser'),
 
@@ -94,29 +103,30 @@ app.layout = html.Div(children=[
         id='date-picker',
         min_date_allowed=df['Date'].min(),
         max_date_allowed=df['Date'].max(),   
-         initial_visible_month=dt(2020, 6, 5),
+        initial_visible_month=dt(2020, 6, 5),
         date=str(dt(2020, 6, 5, 0, 0, 0 )) 
     ),
+    dcc.Dropdown(
+        id='calls-dropdown',
+        options = [{'label': k, 'value': k} for k in nodes],
+        value=''
+    )
 ])
+
+# Callbacks
 @app.callback(
     Output(component_id='network-plot', component_property='figure'),
-    [Input(component_id='date-picker', component_property='date')]
+    [Input(component_id='date-picker', component_property='date'),Input(component_id='calls-dropdown', component_property='value')]
 )
-def update_output_div(selected_date):
-    print(selected_date)
-    filtered_df=df[df['Date']==pd.to_datetime(selected_date)].reset_index(drop=True)
-    
+def update_output_div(selected_date,selected_number):
+    print('Callback Called')
+    filtered_df=df[df['Date']==pd.to_datetime(selected_date)&(df['Caller']==selected_number)].reset_index(drop=True)
+
     return plot_network(filtered_df)
 
 
-# %%
+
+# Run Server
 if __name__ == '__main__':
-    app.run_server(debug=True,port=8800)
+    app.run_server(debug=True,port=8000)
 
-
-# %%
-
-
-
-
-# %%
