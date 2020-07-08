@@ -21,7 +21,11 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
 # Load  Data
+<<<<<<< HEAD
 df =pd.read_csv("./data.csv")
+=======
+df =pd.read_csv("../data/data.csv")
+>>>>>>> 54f069c67fe7d0ca1261e2b914d4100471331453
 
 #Color scale of edges
 viridis = cm.get_cmap('viridis', 12)
