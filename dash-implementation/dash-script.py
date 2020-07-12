@@ -121,9 +121,7 @@ app.layout = html.Div(children=[
 def update_output_div(selected_date,selected_number):
     print('Callback Called')
     filtered_df=df[df['Date']==pd.to_datetime(selected_date)&(df['Caller']==selected_number)].reset_index(drop=True)
-
     return plot_network(filtered_df)
-
 
 
 # Run Server
