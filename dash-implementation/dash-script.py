@@ -1,5 +1,6 @@
 
 
+
 # To add a new cell, type '# %%'
 # To add a new markdown cell, type '# %% [markdown]'
 # %%
@@ -23,7 +24,7 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
 # Load  Data
-df = pd.read_csv("./data.csv")
+df = pd.read_csv("../data/data.csv")
 
 #Color scale of edges
 viridis = cm.get_cmap('viridis', 12)
@@ -110,6 +111,12 @@ app.layout = html.Div(children=[
         date=str(dt(2020, 6, 5, 0, 0, 0 )) 
     ),
     dcc.Dropdown(
+        id='select-caller-receiver',
+        options =[{'label':'Caller','value':1}]+[{'label':'Receiver','value':2}] ,
+        value='',
+    ),
+
+    dcc.Dropdown(
         id='caller-dropdown',
         options =[{'label':'None','value':''}]+ [{'label': k, 'value': k} for k in df['Caller'].unique()],
         value='',
@@ -117,7 +124,12 @@ app.layout = html.Div(children=[
     html.Div(
         id='filtered-data',
         style={'display': 'none'}
-    )
+    ),
+      dcc.Dropdown(
+        id='receiver-dropdown',
+        options =[{'label':'None','value':''}]+ [{'label': k, 'value': k} for k in df['Receiver'].unique()],
+        value='',
+    ),
 ])
 
 # Callbacks
@@ -125,25 +137,37 @@ app.layout = html.Div(children=[
 # Callback to filter dataframe
 @app.callback(
     [Output(component_id='filtered-data', component_property='children'),Output(component_id='message',component_property='children')],
-    [Input(component_id='date-picker', component_property='date'),Input(component_id='caller-dropdown', component_property='value')]
+    [Input(component_id='date-picker', component_property='date'),Input(component_id='select-caller-receiver',component_property='value'),Input(component_id='caller-dropdown', component_property='value'),Input(component_id='receiver-dropdown', component_property='value')]
 )
-def update_filtered_div(selected_date,selected_number):
-    if selected_number!='':
-        filtered_df=df[(df['Date']==pd.to_datetime(selected_date))&(df['Caller']==int(selected_number))].reset_index(drop=True)
-    else:
-        filtered_df=df[df['Date']==pd.to_datetime(selected_date)]
-    if filtered_df.shape[0]==0:
-        # Update this 
-        return dash.no_update,'Nothing Matches that Query'      
-    else:
-        # Update Filtered Dataframe
-        return filtered_df.to_json(date_format='iso',orient='split'),'Updated'
+def update_filtered_div_caller(selected_date,selected_option,selected_caller,selected_receiver):
+    if(selected_option==1):        
+        if selected_caller!='':
+            filtered_df=df[(df['Date']==pd.to_datetime(selected_date))&(df['Caller']==int(selected_caller))].reset_index(drop=True)
+        else:
+            filtered_df=df[df['Date']==pd.to_datetime(selected_date)]
+        if filtered_df.shape[0]==0:
+            # Update this 
+            return dash.no_update,'Nothing Matches that Query'      
+        else:
+            # Update Filtered Dataframe
+            return filtered_df.to_json(date_format='iso',orient='split'),'Updated'
+    if(selected_option==2):        
+        if selected_receiver!='':
+            filtered_df=df[(df['Date']==pd.to_datetime(selected_date))&(df['Receiver']==int(selected_receiver))].reset_index(drop=True)
+        else:
+            filtered_df=df[df['Date']==pd.to_datetime(selected_date)]
+        if filtered_df.shape[0]==0:
+            # Update this 
+            return dash.no_update,'Nothing Matches that Query'      
+        else:
+            # Update Filtered Dataframe
+            return filtered_df.to_json(date_format='iso',orient='split'),'Updated'
 # Callback to update network plot
 @app.callback(
     Output(component_id='network-plot',component_property='figure'),
     [Input(component_id='filtered-data',component_property='children')]
 )
-def update_network_plot(filtered_data):
+def update_network_plot_caller(filtered_data):
     return plot_network(pd.read_json(filtered_data, orient='split'))
 
 # Callback to change selectors including caller no. according to date
@@ -151,12 +175,22 @@ def update_network_plot(filtered_data):
     Output(component_id='caller-dropdown',component_property='options'),
     [Input(component_id='date-picker', component_property='date')]
 )
-def update_phone_div(selected_date):
+def update_phone_div_caller(selected_date):
     return [{'label':'None','value':''}]+[{'label': k, 'value': k} for k in df[df['Date']==pd.to_datetime(selected_date)]['Caller'].unique()]
 
+
+@app.callback(
+    Output(component_id='receiver-dropdown',component_property='options'),
+    [Input(component_id='date-picker', component_property='date')]
+)
+def update_phone_div_receiver(selected_date):
+    return [{'label':'None','value':''}]+[{'label': k, 'value': k} for k in df[df['Date']==pd.to_datetime(selected_date)]['Receiver'].unique()]
+
+
 # Run Server
+if __name__ == '__main__':
+    app.run_server(debug=True,port=8000)
 
 
-
-
-
+if __name__ == '__main__':
+    app.run_server(debug=True,port=8000)
