@@ -21,14 +21,14 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
 # Load  Data
-df =pd.read_csv("../data/data.csv")
+df = pd.read_csv("../data/data.csv")
 
 #Color scale of edges
 viridis = cm.get_cmap('viridis', 12)
 # Define Color
 df['Dura_color']=(df['Duration']/df['Duration'].max()).apply(viridis)
 
-#global usage
+#Node calculation and dataframe cleaning
 
 nodes=list(np.union1d(df['Caller'].unique(),df['Receiver'].unique()))
 df['Date']=df['Date'].apply(pd.to_datetime).dt.date
@@ -49,7 +49,7 @@ def plot_network(df):
         x1,y1=G.nodes[x['Receiver_node']]['pos']
         edge_trace.append(dict(type='scatter',
         x=[x0,x1], y=[y0,y1],
-        line=dict(width=0.5, color='rgba'+str(x['Dura_color'])),
+        line=dict(width=0.5, color='rgba'+str(x['Dura_color']).replace(']',')').replace('[','(')),
         hoverinfo='none',
         mode='lines'))
     df.apply(add_coords,axis=1)
@@ -84,7 +84,7 @@ def plot_network(df):
     fig.update_layout(transition_duration=500)
     return fig
 
-
+# Create an image for the same.
 # Layout of App
 app.layout = html.Div(children=[
     html.H1(children='CDR Analyser'),
@@ -95,6 +95,7 @@ app.layout = html.Div(children=[
     html.Div(
         id='date-selected'
     ),
+    html.Div(id='message'),
     dcc.Graph(
         id='network-plot',
         figure=plot_network(df[df['Date']==df['Date'].min()].reset_index(drop=True))
@@ -107,24 +108,82 @@ app.layout = html.Div(children=[
         date=str(dt(2020, 6, 5, 0, 0, 0 )) 
     ),
     dcc.Dropdown(
-        id='calls-dropdown',
-        options = [{'label': k, 'value': k} for k in nodes],
-        value=''
-    )
+        id='select-caller-receiver',
+        options =[{'label':'Caller','value':1}]+[{'label':'Receiver','value':2}] ,
+        value='',
+    ),
+
+    dcc.Dropdown(
+        id='caller-dropdown',
+        options =[{'label':'None','value':''}]+ [{'label': k, 'value': k} for k in df['Caller'].unique()],
+        value='',
+    ),
+    html.Div(
+        id='filtered-data',
+        style={'display': 'none'}
+    ),
+      dcc.Dropdown(
+        id='receiver-dropdown',
+        options =[{'label':'None','value':''}]+ [{'label': k, 'value': k} for k in df['Receiver'].unique()],
+        value='',
+    ),
 ])
 
 # Callbacks
+# Callback to update df used for plotting
+# Callback to filter dataframe
 @app.callback(
-    Output(component_id='network-plot', component_property='figure'),
-    [Input(component_id='date-picker', component_property='date'),Input(component_id='calls-dropdown', component_property='value')]
+    [Output(component_id='filtered-data', component_property='children'),Output(component_id='message',component_property='children')],
+    [Input(component_id='date-picker', component_property='date'),Input(component_id='select-caller-receiver',component_property='value'),Input(component_id='caller-dropdown', component_property='value'),Input(component_id='receiver-dropdown', component_property='value')]
 )
-def update_output_div(selected_date,selected_number):
-    print('Callback Called')
-    filtered_df=df[df['Date']==pd.to_datetime(selected_date)&(df['Caller']==selected_number)].reset_index(drop=True)
-    return plot_network(filtered_df)
+def update_filtered_div_caller(selected_date,selected_option,selected_caller,selected_receiver):
+    if(selected_option==1):        
+        if selected_caller!='':
+            filtered_df=df[(df['Date']==pd.to_datetime(selected_date))&(df['Caller']==int(selected_caller))].reset_index(drop=True)
+        else:
+            filtered_df=df[df['Date']==pd.to_datetime(selected_date)]
+        if filtered_df.shape[0]==0:
+            # Update this 
+            return dash.no_update,'Nothing Matches that Query'      
+        else:
+            # Update Filtered Dataframe
+            return filtered_df.to_json(date_format='iso',orient='split'),'Updated'
+    if(selected_option==2):        
+        if selected_receiver!='':
+            filtered_df=df[(df['Date']==pd.to_datetime(selected_date))&(df['Receiver']==int(selected_receiver))].reset_index(drop=True)
+        else:
+            filtered_df=df[df['Date']==pd.to_datetime(selected_date)]
+        if filtered_df.shape[0]==0:
+            # Update this 
+            return dash.no_update,'Nothing Matches that Query'      
+        else:
+            # Update Filtered Dataframe
+            return filtered_df.to_json(date_format='iso',orient='split'),'Updated'
+# Callback to update network plot
+@app.callback(
+    Output(component_id='network-plot',component_property='figure'),
+    [Input(component_id='filtered-data',component_property='children')]
+)
+def update_network_plot_caller(filtered_data):
+    return plot_network(pd.read_json(filtered_data, orient='split'))
+
+# Callback to change selectors including caller no. according to date
+@app.callback(
+    Output(component_id='caller-dropdown',component_property='options'),
+    [Input(component_id='date-picker', component_property='date')]
+)
+def update_phone_div_caller(selected_date):
+    return [{'label':'None','value':''}]+[{'label': k, 'value': k} for k in df[df['Date']==pd.to_datetime(selected_date)]['Caller'].unique()]
+
+
+@app.callback(
+    Output(component_id='receiver-dropdown',component_property='options'),
+    [Input(component_id='date-picker', component_property='date')]
+)
+def update_phone_div_receiver(selected_date):
+    return [{'label':'None','value':''}]+[{'label': k, 'value': k} for k in df[df['Date']==pd.to_datetime(selected_date)]['Receiver'].unique()]
 
 
 # Run Server
 if __name__ == '__main__':
     app.run_server(debug=True,port=8000)
-
