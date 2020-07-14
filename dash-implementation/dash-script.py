@@ -189,8 +189,5 @@ def update_phone_div_receiver(selected_date):
 
 # Run Server
 if __name__ == '__main__':
-    app.run_server(debug=True,port=8000)
+    app.run_server(debug=True,port=8100)
 
-
-if __name__ == '__main__':
-    app.run_server(debug=True,port=8000)
