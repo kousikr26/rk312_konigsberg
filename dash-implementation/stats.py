@@ -14,7 +14,8 @@ from collections import defaultdict
 
 df = pd.read_csv("data.csv")
 rows_count=len(df.index)
-print(df.head())
+
+#returns the mean duration of calls
 def meanDurationOfCalls(x):
     r = 0
     t = 0
@@ -28,7 +29,10 @@ def meanDurationOfCalls(x):
             j = j + 1
     return r
 
-
+#returns a dictionary with the number of minutes of talk
+#time corresponding to each hour of the day
+#Note that m[i] corresponds to the total minutes of talk
+#time from ith hour to (i+1)th hour
 def peakHours(x):
     m = {}
     for i in range(24):
@@ -57,7 +61,9 @@ def peakHours(x):
 
 
 
-
+#returns a list of size 2
+#first element -> no. of outgoing calls
+#second element -> no. of incomming calls
 def ogIc(x):
     z = [0,0]
     for i in range(rows_count):
@@ -67,6 +73,10 @@ def ogIc(x):
             z[1]+=1
     return z
 
+#returns a list of size 3
+#first element -> most calls to
+#second element -> most calls from
+#third element -> most calls in total
 def mostCalls(x):
     m1 = {}
     m2 = {}
@@ -88,11 +98,3 @@ def mostCalls(x):
                 m3[df.at[i,'Caller']]=1
     z = [max(m1, key=m1.get),max(m2, key=m2.get),max(m3, key=m3.get)]
     return z
-
-print(meanDurationOfCalls(7978131764))
-key_value = (peakHours(7978131764))
-print( sorted(key_value.items(), key = lambda kv:(kv[1], kv[0])) )
-
-print(" ")
-print (ogIc(7978131764))
-print(mostCalls(7978131764))
