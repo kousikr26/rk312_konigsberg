@@ -8,20 +8,20 @@ import calendar
 from datetime import datetime as dt
 from pathlib import Path
 from collections import defaultdict
-
+from DF import df
 
 # Reading the csv into a Pandas dataframe df
-filepath=Path("/home/iit/SIH/cdr-viz/data/data.csv")
-df = pd.read_csv(filepath)
-rows_count=len(df.index)
+#filepath=Path("/home/iit/SIH/cdr-viz/data/data.csv")
+#df = pd.read_csv(filepath)
+#rows_count=len(df.index)
 
 
 #Modifying the date format so date comparison becomes easy
-df['Date']=df['Date'].apply(pd.to_datetime).dt.date
-df['Time']=df['Time'].apply(pd.to_datetime).dt.time
+#df['Date']=df['Date'].apply(pd.to_datetime).dt.date
+#df['Time']=df['Time'].apply(pd.to_datetime).dt.time
 
-for i in range(rows_count):
-      df.at[i,'DateTime'] = datetime.datetime.combine(df.at[i,"Date"],df.at[i,"Time"])
+#for i in range(rows_count):
+#      df.at[i,'DateTime'] = datetime.datetime.combine(df.at[i,"Date"],df.at[i,"Time"])
 
 #df['DateTime']=df['DateTime'] = df['DateTime'].apply(pd.to_datetime).dt.datetime
 
@@ -53,15 +53,15 @@ start_time="17:30:00"
 end_time="19:34:52"
 
 
-def date_time_format(start_date,start_time,end_date,end_time):
-    Interval=dict()
-    Interval['start_date'] = datetime.datetime.strptime(start_date,'%Y-%m-%d').date()
-    Interval['start_time'] = datetime.datetime.strptime(start_time,'%H:%M:%S').time()
-    Interval['start']=datetime.datetime.combine(Interval['start_date'],Interval['start_time'])
-    Interval['end_date'] = datetime.datetime.strptime(end_date,'%Y-%m-%d').date()
-    Interval['end_time'] = datetime.datetime.strptime(end_time,'%H:%M:%S').time()
-    Interval['end']=datetime.datetime.combine(Interval['end_date'],Interval['end_time'])
-    return Interval
+#def date_time_format(start_date,start_time,end_date,end_time):
+#    Interval=dict()
+#    Interval['start_date'] = datetime.datetime.strptime(start_date,'%Y-%m-%d').date()
+#    Interval['start_time'] = datetime.datetime.strptime(start_time,'%H:%M:%S').time()
+#    Interval['start']=datetime.datetime.combine(Interval['start_date'],Interval['start_time'])
+#    Interval['end_date'] = datetime.datetime.strptime(end_date,'%Y-%m-%d').date()
+#    Interval['end_time'] = datetime.datetime.strptime(end_time,'%H:%M:%S').time()
+#    Interval['end']=datetime.datetime.combine(Interval['end_date'],Interval['end_time'])
+#    return Interval
 
 # ...............................................TEST ........................................................
 #Interval=date_time_format(start_date,start_time,end_date,end_time)
@@ -74,9 +74,9 @@ def date_time_format(start_date,start_time,end_date,end_time):
 # Initializeing -1 for not discovered and storing the distance when visited/discovered
  
 
-Interval=date_time_format(start_date,start_time,end_date,end_time)
-start_interval = Interval['start']
-end_interval = Interval['end']
+#Interval=date_time_format(start_date,start_time,end_date,end_time)
+#start_interval = Interval['start']
+#end_interval = Interval['end']
 
 
 # Using the dataframe and extracting the information for the chosen time interval
@@ -179,3 +179,51 @@ def BFS3(df,Person1,Person2,queue,visited):
                  visited[node] = cur_distance+1
 
       return Communicated 
+
+
+## Given a list of phone numbers returns the set of all connected components of which the given numbers are a part of
+
+# This is the list of requisite numbers 
+# Hardcoded as we will get this from frontend/user
+
+#numbers = [879789456,4567896789,6738456978]
+
+# Converting a list to dictionary to keep a track of the connected components 
+#numbers_status = {numbers[i]: False for i in range(len(numbers))}
+
+# Queue and Visited are declared already above 
+
+#list_of_components = []
+
+def BFS4(cur_number,queue,visited):
+      queue.append(cur_number)
+      visited[cur_number] = 0
+      
+      # Initialize the list of tuples(component reachable from this number)
+      this_comp=[]
+      while queue:
+          cur_vertex = queue.pop(0)
+          cur_distance = visited[cur_vertex]
+
+          for node in graph[cur_vertex]:
+              if visited[node]==-1:
+                 queue.append(node)
+                 # Add to a this component
+                 tup = (cur_vertex,node)
+                 this_comp.append(tup)
+                 visited[node] = cur_distance+1
+      return this_comp
+
+
+## Using the BFS4 function and finding all components
+def BFSN(numbers):
+    numbers_status = {numbers[i]: False for i in range(len(numbers))}
+    list_of_components = []
+    for it in range(len(numbers_status)):
+        if numbers_status[numbers[it]]==False:
+            numbers_status[numbers[it]] = True
+            cur_component = BFS4(df,numbers[it],queue,visited)
+            list_of_components.append(cur_component)
+    return list_of_components
+
+
