@@ -36,6 +36,8 @@ def BFS4(cur_number, queue):
 
 ## Using the BFS4 function and finding all components
 def bfs(numbers):
+    visited.clear()
+    queue.clear()
     numbers_status = {numbers[i]: False for i in range(len(numbers))}
     list_of_components = []
     for it in range(len(numbers_status)):
