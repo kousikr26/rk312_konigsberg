@@ -1,5 +1,4 @@
-
-##### Import Libraries #########
+#### Import Libraries #########
 import pandas as pd
 import numpy as np
 import json
@@ -33,12 +32,12 @@ styles = {
 
 
 # Load  Data
-df=pd.read_csv('./data/data.csv')
+df=pd.read_csv('data.csv')
 #### Create App ###
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 #### Default Variables ####
-default_duration_slider_val = [0,10]
+default_duration_slider_val = [0,100]
 default_time_slider_val = ['00:00', '24:00']
 #Loop to generate marks for Time
 time_str = ['0','0',':','0','0']
@@ -54,6 +53,14 @@ coords_to_node={} # Dictionary that stores coordinates to node number
 node_to_num={} # Dictionary that stores node number to phone number
 data_columns=["Caller","Receiver","Date","Time","Duration","TowerID","IMEI"]
 nodes=np.union1d(df['Caller'].unique(),df['Receiver'].unique()) # nodes
+
+
+#Color scale of edges
+viridis = cm.get_cmap('viridis', 12)
+# Define Color
+df['Dura_color']=(df['Duration']/df['Duration'].max()).apply(viridis)
+df['Date']=df['Date'].apply(pd.to_datetime).dt.date
+
 
 df['Caller_node']=df['Caller'].apply(lambda x:list(nodes).index(x)) # Caller Nodes
 df['Receiver_node']=df['Receiver'].apply(lambda x:list(nodes).index(x)) 
@@ -144,7 +151,6 @@ app.layout = html.Div(children=[
         html.Div([
             dcc.Markdown("""
                 **Hover To Get Stats**
-
                 Mouse over nodes in the graph to get statistics.
             """),
             html.Pre(id='hover-data', style=styles['pre'])
@@ -153,7 +159,6 @@ app.layout = html.Div(children=[
         html.Div([
             dcc.Markdown("""
                 **Click to get CDR for a number**
-
                 Click on points in the graph to get the call data records.
             """),
             html.Pre(id='click-data', style=styles['pre']),
@@ -246,12 +251,15 @@ app.layout = html.Div(children=[
 )
 def update_filtered_div_caller(selected_date,selected_duration, selected_time,selected_option,selected_caller,selected_receiver):
     # Date,Time,Duration Filter 
-    print(type(df['Time'].values[0]),type(times[selected_time[1]]))
-    print(selected_duration,selected_time)
+    #print(type(df['Time'].values[0]),type(times[selected_time[1]]))
+    # print(selected_duration,selected_time)
+    # print("Shape of filtered_df (PRE) : ", df.shape)
+    # print(df.head())
     filtered_df=df[(df['Date']==pd.to_datetime(selected_date))\
         &((df['Duration'] >= selected_duration[0]) & (df['Duration'] <= selected_duration[1]))\
             &((df['Time'] < times[selected_time[1]]) & (df['Time'] >= times[selected_time[0]]))].reset_index(drop=True)
-    print(filtered_df.shape)
+
+    print("Shape of filtered_df (POST) : ", filtered_df.shape)
     # Number Filter
     # If Caller is Selected
     if(selected_option==1):        
@@ -281,6 +289,7 @@ def update_filtered_div_caller(selected_date,selected_duration, selected_time,se
     Output('hover-data', 'children'),
     [Input('network-plot', 'hoverData'),Input(component_id='filtered-data',component_property='children')])
 def display_hover_data(hoverData,filtered_data):
+    print("filtered_data : ", type(filtered_data))
     df=pd.read_json(filtered_data, orient='split')
     if hoverData is not None:
         # Get node number corresponding to the point.
@@ -371,5 +380,4 @@ def update_phone_div_receiver(selected_date):
 
 #### Run Server ####
 if __name__ == '__main__':
-    app.run_server(debug=True,port=8000)
-
+    app.run_server(debug=True,host='0.0.0.0')
