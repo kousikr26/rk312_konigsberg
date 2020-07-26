@@ -1,6 +1,4 @@
-# To add a new cell, type '# %%'
-# To add a new markdown cell, type '# %% [markdown]'
-# %%
+
 # Import Libraries
 import pandas as pd
 import numpy as np
@@ -240,3 +238,6 @@ def update_selected_duration(selected_time):
 if __name__ == '__main__':
     #app.run_server(debug=True, port=8000)
     app.run_server(debug = True,host='0.0.0.0')
+
+
+# %%
