@@ -1,24 +1,13 @@
 import pandas as pd
-
-
-
-# Reading the csv into a Pandas dataframe df
-
-#df = pd.read_csv("../data/data.csv")
-#rows_count = len(df.index)
-
-#returns the mean duration of calls
-from DF import *
-
-def meanDur(nodeNumber):
-    return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber) ].Duration.mean()
-
+def meanDur(nodeNumber,df):
+    #print(df['Caller_node'].unique(),df['Receiver_node'].unique(),nodeNumber)
+    return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber) ]['Duration'].mean()
 
 #returns a dictionary with the number of minutes of talk
 #time corresponding to each hour of the day
 #Note that m[i] corresponds to the total minutes of talk
 #time from ith hour to (i+1)th hour
-def peakHours(nodeNumber):
+def peakHours(nodeNumber,df):
     m = {}
     for i in range(24):
         m[i] = 0
@@ -52,13 +41,10 @@ def peakHours(nodeNumber):
             break
     return n
 
-
-
-
 #returns a list of size 2
 #first element -> no. of outgoing calls
 #second element -> no. of incomming calls
-def ogIc(x):
+def ogIc(x,df):
     z = [0,0]
     z[0] = len(df[df['Caller_node'] == x])
     z[1] = len(df[df['Receiver_node'] == x])
@@ -68,7 +54,7 @@ def ogIc(x):
 #first element -> most calls to
 #second element -> most calls from
 #third element -> most calls in total
-def mostCalls(nodeNumber):
+def mostCalls(nodeNumber,df):
     m1 = {}
     m2 = {}
     m3 = {}

@@ -1,8 +1,9 @@
+# ###### NOT BEING USED RIGHT NOW #######
 import pandas as pd
 from matplotlib import cm
 import numpy as np
 
-df = pd.read_csv("../data/data.csv")
+df = pd.read_csv("./data/data.csv")
 
 #Color scale of edges
 viridis = cm.get_cmap('viridis', 12)
