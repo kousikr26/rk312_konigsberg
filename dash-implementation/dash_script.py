@@ -234,7 +234,6 @@ app.layout = html.Div(children=[
         value='None',
         multi=True,
     ), # Dropdown for Reciever,
-
     html.Div(
         id='filtered-data',
         style={'display': 'none'}
