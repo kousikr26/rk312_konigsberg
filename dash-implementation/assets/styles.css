@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Recursive:wght@300&display=swap');
+*{
+    font-family: 'Recursive',sans-serif;
+    color:#3d5a80;
+}
+body {
+    background-size: 20px 20px;
+    background-image:
+      linear-gradient(to right, #0353a4 1px, transparent 2px),
+      linear-gradient(to bottom, #0353a4 1px, transparent 2px);
+    background-color: #faf9f9;
+  }
+pre {
+    border: thin lightgrey solid,
+    overflowX: scroll;
+}
+#message{
+    background-color:purple;
+    color:white;
+    width:30%;
+    text-align:center;
+    margin:auto;
+    margin-bottom:5%;
+}
+#header-text{
+    text-align: center;
+    background-color: white;
+    width: 50%;
+    margin:auto;
+    margin-top: 2%;
+    padding:10px;
+    border:1px black solid;
+    border-top: 0px;
+    border-bottom: 0px;
+}
+#filters{
+    background-color: white;
+    border:1px black solid;
+}
+#stats{
+    background-color: white;
+    border:1px black solid; 
+}
+#plot-area{
+    background-color: white;
+    border:1px black solid; 
+    border-left: 0px;
+    border-right:0px;
+} 
+}
+h5{
+    margin-top: 10px;
+}
+.container-mid{
+margin-right: 10%;
+margin-left: 10%;
+}
