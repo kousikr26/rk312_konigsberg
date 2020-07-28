@@ -1,4 +1,4 @@
 # cdr-viz
-## run source venv/bin/activate
+## download requirements
 ## run python dash-implementation/dash_script
 ### ready to go
