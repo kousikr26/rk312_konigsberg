@@ -11,8 +11,8 @@ body {
     background-color: #faf9f9;
   }
 pre {
-    border: thin lightgrey solid,
-    overflowX: scroll;
+    border: thin lightgrey solid;
+    overflow-x: scroll;
 }
 #message{
     background-color:purple;
