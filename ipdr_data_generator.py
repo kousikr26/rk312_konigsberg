@@ -118,7 +118,7 @@ for i in range(len(calls)):
 #print(calls)
 print(len(calls))
 print(public_ip())
-with open('data.csv','w',newline='') as file:
+with open('ipdr_data.csv','w',newline='') as file:
     writer=csv.DictWriter(file,fieldnames=fields)
     writer.writeheader()
     for i in range(len(calls)):
