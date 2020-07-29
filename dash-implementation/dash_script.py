@@ -124,16 +124,18 @@ def plot_network(df):
     node_x = []
     node_y = []
     total_duration = []
+    hover_list = []
     for node in pos:
         x, y = pos[node]
         coords_to_node[(x, y)] = node
-
+        hover_list.append(str(node_to_num[node]))
         node_x.append(x)
         node_y.append(y)
         total_duration.append(27*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
     node_trace = go.Scatter(
         x=node_x, y=node_y,
         mode='markers',
+        hovertext = hover_list,
         hoverinfo='text',
         showlegend=False,
         marker=dict(
@@ -158,7 +160,11 @@ def plot_network(df):
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
                     )  # Complete Figure
     fig.update_layout(transition_duration=500)  # Transition
-    fig.update_layout(clickmode='event+select')  # Event method
+    #fig.update_layout(hover_label_align = 'right')
+    fig.update_layout(
+         hoverlabel = dict(bgcolor='white',font_size = 15,font_family = 'Rockwell')
+    )
+    # fig.update_layout(clickmode='event+select')  # Event method
     fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1), plot_bgcolor='rgb(255,255,255)')
     #fig.update_traces(marker_size=20)  # marker size
     return fig
