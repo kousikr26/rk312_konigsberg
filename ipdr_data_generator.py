@@ -60,7 +60,7 @@ def getTime(t):
     return time.strftime("%H:%M:%S",t)    
 
 def volume():
-    return float(decimal.Decimal(random.randrange(155, 389))/100)
+    return float(decimal.Decimal(random.randrange(0, 10))/100)
 
 def rat_type():
     allowed_values = ['2G','3G']
