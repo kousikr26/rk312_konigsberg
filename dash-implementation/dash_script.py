@@ -1,5 +1,7 @@
 #### Import Libraries #########
 import pandas as pd
+import base64
+import io
 import numpy as np
 import json
 import networkx as nx
@@ -55,19 +57,27 @@ node_to_num = {}  # Dictionary that stores node number to phone number
 num_to_node = {}  #Dictionary that stores numbers to node
 data_columns = ["Caller", "Receiver", "Date",
                 "Time", "Duration", "TowerID", "IMEI"]
-nodes = np.union1d(df['Caller'].unique(), df['Receiver'].unique())  # nodes
+
 
 
 # Color scale of edges
 viridis = cm.get_cmap('viridis', 12)
-# Define Color
-df['Dura_color'] = (df['Duration']/df['Duration'].max()).apply(viridis)
-df['Date'] = df['Date'].apply(pd.to_datetime).dt.date
+def preprocess_data(df):
+    # nodes
+    nodes = np.union1d(df['Caller'].unique(), df['Receiver'].unique())
+    # Define Color
+    df['Dura_color'] = (df['Duration']/df['Duration'].max()).apply(viridis)
+    df['Date'] = df['Date'].apply(pd.to_datetime).dt.date
 
 
-df['Caller_node'] = df['Caller'].apply(
-    lambda x: list(nodes).index(x))  # Caller Nodes
-df['Receiver_node'] = df['Receiver'].apply(lambda x: list(nodes).index(x))
+    df['Caller_node'] = df['Caller'].apply(
+        lambda x: list(nodes).index(x))  # Caller Nodes
+    df['Receiver_node'] = df['Receiver'].apply(lambda x: list(nodes).index(x))
+    coords_to_node.clear()
+    num_to_node.clear()
+    node_to_num.clear()
+
+preprocess_data(df)
 #### Plots ####
 # Plot Graph of calls
 
@@ -121,6 +131,7 @@ def plot_network(df):
         hoverinfo='text',
         marker=dict(
             size=total_duration,
+            showscale=True,
             line_width=2,
             line_color='black'))  # Object for point scatter plot
     fig = go.Figure(data=edge_trace+[node_trace],
@@ -249,8 +260,33 @@ app.layout = html.Div(children=[
                 [{'label': k, 'value': k} for k in pd.unique(df[['Caller','Receiver']].values.ravel())],
                 value='None',
                 multi=True,
-            )],  # Dropdown for finding,
+            ),   # Dropdown for finding,
+            html.Div([
+                dcc.Upload(
+                    id='upload-data',
+                    children=html.Div([
+                        'Drag and Drop or ',
+                        html.A('Select a File')
+                    ]),
+                    style={
+                        'width': '100%',
+                        'height': '60px',
+                        'lineHeight': '60px',
+                        'borderWidth': '1px',
+                        'borderStyle': 'dashed',
+                        'borderRadius': '5px',
+                        'textAlign': 'center',
+                        'margin-bottom':'12px',
+                        'margin-top':'12px'
+                    },
+                    # Allow multiple files to be uploaded
+                    multiple=False
+                ),
+                html.Div(id='output-data-upload'),
+            ])
+            ],
             id='filters',lg=3),  # Filters
+
         dbc.Col(
            [ html.H3('Network Graph : '),
             dcc.Graph(
@@ -304,11 +340,17 @@ app.layout = html.Div(children=[
 @app.callback(
     [Output(component_id='filtered-data', component_property='children'),
      Output(component_id='message', component_property='children')],
-    [Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date'), Input(component_id='duration-slider', component_property='value'), Input(component_id='time-slider', component_property='value'),
+    [Input('upload-data', 'contents'),Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date'), Input(component_id='duration-slider', component_property='value'), Input(component_id='time-slider', component_property='value'),
      Input(component_id='select-caller-receiver', component_property='value'), Input(component_id='caller-dropdown', component_property='value'), Input(component_id='receiver-dropdown', component_property='value')]
 )
-def update_filtered_div_caller(selected_date1, selected_date2, selected_duration, selected_time, selected_option, selected_caller, selected_receiver):
+def update_filtered_div_caller(contents, selected_date1, selected_date2, selected_duration, selected_time, selected_option, selected_caller, selected_receiver):
     # Date,Time,Duration Filter
+    if contents is not None:
+        content_type, content_string = contents.split(',')
+        decoded = base64.b64decode(content_string)
+        global df
+        df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+        preprocess_data(df)
 
     filtered_df = df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date'] <= pd.to_datetime(selected_date2))
                      & ((df['Duration'] >= selected_duration[0]) & (df['Duration'] <= selected_duration[1]))
@@ -320,6 +362,7 @@ def update_filtered_div_caller(selected_date1, selected_date2, selected_duration
         if selected_caller != 'None':
             filtered_df = filtered_df[(filtered_df['Caller'].isin(
                 list(selected_caller)))].reset_index(drop=True)
+
    # If Receiver is selected
     if(selected_option == 2):
         if selected_receiver != 'None':
