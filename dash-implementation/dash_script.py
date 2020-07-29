@@ -1,5 +1,7 @@
 #### Import Libraries #########
 import pandas as pd
+import base64
+import io
 import numpy as np
 import json
 import networkx as nx
@@ -14,7 +16,9 @@ from datetime import datetime as dt
 from stats import *
 import pygraphviz as pgv
 import dash_bootstrap_components as dbc
+import math
 ### Import functions for Breadth First Search ###
+from addEdge import addEdge
 
 from BFSN import bfs
 
@@ -50,25 +54,37 @@ for i in range(0, df['Duration'].max(), 5):
 
 
 coords_to_node = {}  # Dictionary that stores coordinates to node number
+
 node_to_num = {}  # Dictionary that stores node number to phone number
+num_to_node = {}  #Dictionary that stores numbers to node
 data_columns = ["Caller", "Receiver", "Date",
                 "Time", "Duration", "TowerID", "IMEI"]
-nodes = np.union1d(df['Caller'].unique(), df['Receiver'].unique())  # nodes
+
 
 
 # Color scale of edges
 viridis = cm.get_cmap('viridis', 12)
-# Define Color
-df['Dura_color'] = (df['Duration']/df['Duration'].max()).apply(viridis)
-df['Date'] = df['Date'].apply(pd.to_datetime).dt.date
+def preprocess_data(df):
+    # nodes
+    nodes = np.union1d(df['Caller'].unique(), df['Receiver'].unique())
+    # Define Color
+    df['Dura_color'] = (df['Duration']/df['Duration'].max()).apply(viridis)
+    df['Date'] = df['Date'].apply(pd.to_datetime).dt.date
 
 
-df['Caller_node'] = df['Caller'].apply(
-    lambda x: list(nodes).index(x))  # Caller Nodes
-df['Receiver_node'] = df['Receiver'].apply(lambda x: list(nodes).index(x))
+    df['Caller_node'] = df['Caller'].apply(
+        lambda x: list(nodes).index(x))  # Caller Nodes
+    df['Receiver_node'] = df['Receiver'].apply(lambda x: list(nodes).index(x))
+    coords_to_node.clear()
+    num_to_node.clear()
+    node_to_num.clear()
+
+preprocess_data(df)
 #### Plots ####
 # Plot Graph of calls
 
+fig = go.Figure()
+pos = {}
 
 def plot_network(df):
     G = nx.DiGraph()  # networkX Graph
@@ -89,35 +105,48 @@ def plot_network(df):
 
         node_to_num[x['Caller_node']] = x['Caller']
         node_to_num[x['Receiver_node']] = x['Receiver']
+        num_to_node[x['Caller']] = x['Caller_node']
+        num_to_node[x['Receiver']] = x['Receiver_node']
+        edges_x,edges_y=addEdge((x0,y0),(x1,y1),[],[])
+        print('Edges:',x0,y0 ,edges_x)
         edge_trace.append(dict(type='scatter',
-                               x=[x0, x1], y=[y0, y1],
+                               x=edges_x, y=edges_y,
+                               showlegend=False,
                                line=dict(
-                                   width=0.5, color='rgba'+str(x['Dura_color']).replace(']', ')').replace('[', '(')),
+                                   width=2, color='rgba'+str(x['Dura_color']).replace(']', ')').replace('[', '(')),
                                hoverinfo='none',
-                               mode='lines'))  # Graph object for each connection
-
+                               mode='lines',
+        ))  # Graph object for each connection
+       
     df.apply(add_coords, axis=1)  # Adding edges
 
     # adding points
     node_x = []
     node_y = []
+    total_duration = []
     for node in pos:
         x, y = pos[node]
         coords_to_node[(x, y)] = node
+
         node_x.append(x)
         node_y.append(y)
+        total_duration.append(27*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
     node_trace = go.Scatter(
         x=node_x, y=node_y,
         mode='markers',
         hoverinfo='text',
+        showlegend=False,
         marker=dict(
-            size=10,
-            line_width=2))  # Object for point scatter plot
+            size=total_duration,
+            showscale=True,
+            line_width=2,
+            line_color='black'))  # Object for point scatter plot
     fig = go.Figure(data=edge_trace+[node_trace],
                     layout=go.Layout(
                    
                     titlefont_size=16,
-                    showlegend=False,
+                 
+
                     hovermode='closest',
                     margin=dict(b=20, l=5, r=5, t=40),
                     annotations=[dict(
@@ -128,11 +157,10 @@ def plot_network(df):
                                showticklabels=False),
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
                     )  # Complete Figure
-
     fig.update_layout(transition_duration=500)  # Transition
     fig.update_layout(clickmode='event+select')  # Event method
-
-    fig.update_traces(marker_size=20)  # marker size
+    fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1), plot_bgcolor='rgb(255,255,255)')
+    #fig.update_traces(marker_size=20)  # marker size
     return fig
 
 # Create an image for the same. -- What?
@@ -157,15 +185,25 @@ app.layout = html.Div(children=[
                 'Filters'
             ),
             html.H5(
-                'Date:'
+                'From:'
             ),
             dcc.DatePickerSingle(
-                id='date-picker',
+                id='date-picker1',
                 min_date_allowed=df['Date'].min(),
                 max_date_allowed=df['Date'].max(),
                 initial_visible_month=dt(2020, 6, 5),
                 date=str(dt(2020, 6, 17, 0, 0, 0))
             ),  # Data Picker
+            html.H5(
+                'To:'
+            ),
+            dcc.DatePickerSingle(
+                id='date-picker2',
+                min_date_allowed=df['Date'].min(),
+                max_date_allowed=df['Date'].max(),
+                initial_visible_month=dt(2020, 6, 5),
+                date=str(dt(2020, 6, 17, 0, 0, 0))
+            ),
             dcc.RangeSlider(
                 id='duration-slider',
                 min=0,
@@ -218,14 +256,50 @@ app.layout = html.Div(children=[
                 [{'label': k, 'value': k} for k in df['Receiver'].unique()],
                 value='None',
                 multi=True,
-            )],  # Dropdown for Reciever,
+            ),  # Dropdown for Reciever,
+            html.H5(
+                'Find:'
+            ),
+            dcc.Dropdown(
+                id='find-dropdown',
+                options=[{'label': 'None', 'value': 'None'}] + \
+                [{'label': k, 'value': k} for k in pd.unique(df[['Caller','Receiver']].values.ravel())],
+                value='None',
+                multi=True,
+            ),   # Dropdown for finding,
+            html.Div([
+                dcc.Upload(
+                    id='upload-data',
+                    children=html.Div([
+                        'Drag and Drop or ',
+                        html.A('Select a File')
+                    ]),
+                    style={
+                        'width': '100%',
+                        'height': '60px',
+                        'lineHeight': '60px',
+                        'borderWidth': '1px',
+                        'borderStyle': 'dashed',
+                        'borderRadius': '5px',
+                        'textAlign': 'center',
+                        'margin-bottom':'12px',
+                        'margin-top':'12px'
+                    },
+                    # Allow multiple files to be uploaded
+                    multiple=False
+                ),
+                html.Div(id='output-data-upload'),
+            ])
+            ],
             id='filters',lg=3),  # Filters
+
         dbc.Col(
            [ html.H3('Network Graph : '),
             dcc.Graph(
                 id='network-plot'
 
-            )],id='plot-area',lg=6),     # Network Plot
+            ),
+            html.H5('The size of the dots denote the total duration of the caller/callee')],id='plot-area',lg=6),     # Network Plot
         dbc.Col(children=[
             html.H3('Statistics'),
             html.Div([
@@ -273,13 +347,19 @@ app.layout = html.Div(children=[
 @app.callback(
     [Output(component_id='filtered-data', component_property='children'),
      Output(component_id='message', component_property='children')],
-    [Input(component_id='date-picker', component_property='date'), Input(component_id='duration-slider', component_property='value'), Input(component_id='time-slider', component_property='value'),
+    [Input('upload-data', 'contents'),Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date'), Input(component_id='duration-slider', component_property='value'), Input(component_id='time-slider', component_property='value'),
      Input(component_id='select-caller-receiver', component_property='value'), Input(component_id='caller-dropdown', component_property='value'), Input(component_id='receiver-dropdown', component_property='value')]
 )
-def update_filtered_div_caller(selected_date, selected_duration, selected_time, selected_option, selected_caller, selected_receiver):
+def update_filtered_div_caller(contents, selected_date1, selected_date2, selected_duration, selected_time, selected_option, selected_caller, selected_receiver):
     # Date,Time,Duration Filter
+    if contents is not None:
+        content_type, content_string = contents.split(',')
+        decoded = base64.b64decode(content_string)
+        global df
+        df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+        preprocess_data(df)
 
-    filtered_df = df[(df['Date'] == pd.to_datetime(selected_date))
+    filtered_df = df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date'] <= pd.to_datetime(selected_date2))
                      & ((df['Duration'] >= selected_duration[0]) & (df['Duration'] <= selected_duration[1]))
                      & ((df['Time'] < times[selected_time[1]]['label']) & (df['Time'] >= times[selected_time[0]]['label']))].reset_index(drop=True)
 
@@ -289,6 +369,7 @@ def update_filtered_div_caller(selected_date, selected_duration, selected_time, 
         if selected_caller != 'None':
             filtered_df = filtered_df[(filtered_df['Caller'].isin(
                 list(selected_caller)))].reset_index(drop=True)
+
    # If Receiver is selected
     if(selected_option == 2):
         if selected_receiver != 'None':
@@ -399,20 +480,28 @@ def update_network_plot_caller(filtered_data):
 
 @app.callback(
     Output(component_id='caller-dropdown', component_property='options'),
-    [Input(component_id='date-picker', component_property='date')]
+    [Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date')]
 )
-def update_phone_div_caller(selected_date):
-    return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in df[df['Date'] == pd.to_datetime(selected_date)]['Caller'].unique()]
+def update_phone_div_caller(selected_date1, selected_date2):
+    return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))]['Caller'].unique()]
 
 # Callback to change reciever according  to dates
 
 
 @app.callback(
     Output(component_id='receiver-dropdown', component_property='options'),
-    [Input(component_id='date-picker', component_property='date')]
+    [Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date')]
 )
-def update_phone_div_receiver(selected_date):
-    return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in df[df['Date'] == pd.to_datetime(selected_date)]['Receiver'].unique()]
+def update_phone_div_receiver(selected_date1, selected_date2):
+    return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))]['Receiver'].unique()]
+
+
+@app.callback(
+    Output(component_id='find-dropdown', component_property='options'),
+    [Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date')]
+)
+def update_phone_div_receiver(selected_date1, selected_date2):
+    return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in pd.unique(df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))][['Receiver','Caller']].values.ravel())]
 
 
 #### Run Server ####
