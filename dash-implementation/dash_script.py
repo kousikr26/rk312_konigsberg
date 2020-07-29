@@ -14,7 +14,9 @@ from datetime import datetime as dt
 from stats import *
 import pygraphviz as pgv
 import dash_bootstrap_components as dbc
+import math
 ### Import functions for Breadth First Search ###
+from addEdge import addEdge
 
 from BFSN import bfs
 
@@ -95,13 +97,17 @@ def plot_network(df):
         node_to_num[x['Receiver_node']] = x['Receiver']
         num_to_node[x['Caller']] = x['Caller_node']
         num_to_node[x['Receiver']] = x['Receiver_node']
+        edges_x,edges_y=addEdge((x0,y0),(x1,y1),[],[])
+        print('Edges:',x0,y0 ,edges_x)
         edge_trace.append(dict(type='scatter',
-                               x=[x0, x1], y=[y0, y1],
+                               x=edges_x, y=edges_y,
+                               showlegend=False,
                                line=dict(
                                    width=2, color='rgba'+str(x['Dura_color']).replace(']', ')').replace('[', '(')),
                                hoverinfo='none',
-                               mode='lines'))  # Graph object for each connection
-
+                               mode='lines',
+        ))  # Graph object for each connection
+       
     df.apply(add_coords, axis=1)  # Adding edges
 
     # adding points
@@ -119,6 +125,7 @@ def plot_network(df):
         x=node_x, y=node_y,
         mode='markers',
         hoverinfo='text',
+        showlegend=False,
         marker=dict(
             size=total_duration,
             line_width=2,
@@ -127,7 +134,7 @@ def plot_network(df):
                     layout=go.Layout(
                    
                     titlefont_size=16,
-                    showlegend=False,
+                 
 
                     hovermode='closest',
                     margin=dict(b=20, l=5, r=5, t=40),
@@ -139,10 +146,9 @@ def plot_network(df):
                                showticklabels=False),
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
                     )  # Complete Figure
-
     fig.update_layout(transition_duration=500)  # Transition
     fig.update_layout(clickmode='event+select')  # Event method
-
+    fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1), plot_bgcolor='rgb(255,255,255)')
     #fig.update_traces(marker_size=20)  # marker size
     return fig
 
@@ -256,7 +262,8 @@ app.layout = html.Div(children=[
             dcc.Graph(
                 id='network-plot'
 
-            )],id='plot-area',lg=6),     # Network Plot
+            ),
+            html.H5('The size of the dots denote the total duration of the caller/callee')],id='plot-area',lg=6),     # Network Plot
         dbc.Col(children=[
             html.H3('Statistics'),
             html.Div([
