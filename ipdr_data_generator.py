@@ -41,6 +41,13 @@ def public_ip():
 def port():
 	return random.randint(0000,9999)
 
+def dest_port():
+    allowed_values = ['5223','5228', '4244', '5222', '5242', '443', '3478-3481', '49152-65535', '80', '8080', \
+        '443', '8081', '993', '143', '8024', '8027', '8013', '8017', '8003', '7275', '8025', '8009', '58128',\
+             '51637', '61076', '40020', '40017', '40023', '40019', '40001', '40004', '40034', '40031', '40029', '40005',\
+                  '40026', '40008', '40032']
+    return random.choice(allowed_values)
+
 def get_msisdn():
 	return random.randint(100000000000,999999999999)   #12-digit for now
 
@@ -66,7 +73,7 @@ def rat_type():
     allowed_values = ['2G','3G']
     return random.choice(allowed_values)
 
-fields=["Private IP","Private Port", "Public IP", "Public Port", "Dest IP", "MSISDN", "IMSI", "Start Date","Start Time","End Date","End Time","IMEI", "TowerID", "Uplink Volume","Downlink Volume","Total Volume","I_RATTYPE"]
+fields=["Private IP","Private Port", "Public IP", "Public Port", "Dest IP","DEST PORT", "MSISDN", "IMSI", "Start Date","Start Time","End Date","End Time","IMEI", "CELL_ID", "Uplink Volume","Downlink Volume","Total Volume","I_RATTYPE"]
 
 def phoneNumber():
     return random.randint(7000000000,9999999999)
@@ -87,7 +94,7 @@ for x in nums:
     num_calls=random.randint(0,10)
     while num_calls :
         num_calls-=1
-        y,z= public_ip(), port()
+        y,z= public_ip(), dest_port()
         calls.append(x+[y,z])
 	    
 
