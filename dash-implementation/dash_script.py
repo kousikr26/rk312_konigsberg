@@ -33,8 +33,11 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = 'CDR/IPDR Analyser'
 #### Default Variables ####
 default_duration_slider_val = [0, 100]
-default_time_slider_val = ['00:00', '24:00']
-date_format='%d-%m-%Y'
+default_time_slider_val = [0,48]
+default_caller_receiver_val = 3
+
+
+
 # Loop to generate marks for Time
 time_str = ['0', '0', ':', '0', '0']
 times = {0: {'label': "".join(time_str), "style": {
@@ -70,7 +73,7 @@ def preprocess_data(df):
     nodes = np.union1d(df['Caller'].unique(), df['Receiver'].unique())
     # Define Color
     df['Dura_color'] = (df['Duration']/df['Duration'].max()).apply(viridis)
-    df['Date'] = df['Date'].apply(lambda x:pd.to_datetime(x,format=date_format)).dt.date
+    df['Date'] = df['Date'].apply(pd.to_datetime).dt.date
 
 
     df['Caller_node'] = df['Caller'].apply(
@@ -108,13 +111,12 @@ def plot_network(df):
         node_to_num[x['Receiver_node']] = x['Receiver']
         num_to_node[x['Caller']] = x['Caller_node']
         num_to_node[x['Receiver']] = x['Receiver_node']
-        edges_x,edges_y=addEdge([x0,y0],[x1,y1],[],[], 0.6, 'end', 20, 30, 15)
-        
+        edges_x,edges_y=addEdge((x0,y0),(x1,y1),[],[])
         edge_trace.append(dict(type='scatter',
                                x=edges_x, y=edges_y,
                                showlegend=False,
                                line=dict(
-                                   width=2, color='rgba(0,0,0,1)'),
+                                   width=2, color='rgba'+str(x['Dura_color']).replace(']', ')').replace('[', '(')),
                                hoverinfo='none',
                                mode='lines',
         ))  # Graph object for each connection
@@ -132,8 +134,7 @@ def plot_network(df):
         hover_list.append(str(node_to_num[node]))
         node_x.append(x)
         node_y.append(y)
-        total_duration.append(15*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
-    print(np.mean(np.array(total_duration)))
+        total_duration.append(27*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
     node_trace = go.Scatter(
         x=node_x, y=node_y,
         mode='markers',
@@ -142,12 +143,15 @@ def plot_network(df):
         showlegend=False,
         marker=dict(
             size=total_duration,
-            showscale=False,
+            showscale=True,
             line_width=2,
             line_color='black'))  # Object for point scatter plot
     fig = go.Figure(data=edge_trace+[node_trace],
                     layout=go.Layout(
+                   
                     titlefont_size=16,
+                 
+
                     hovermode='closest',
                     margin=dict(b=20, l=5, r=5, t=40),
                     annotations=[dict(
@@ -163,7 +167,7 @@ def plot_network(df):
     fig.update_layout(
          hoverlabel = dict(bgcolor='white',font_size = 15,font_family = 'Rockwell')
     )
-    fig.update_layout(clickmode='event+select')  # Event method
+    # fig.update_layout(clickmode='event+select')  # Event method
     fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1), plot_bgcolor='rgb(255,255,255)')
     #fig.update_traces(marker_size=20)  # marker size
     return fig
@@ -172,9 +176,6 @@ def plot_network(df):
 
 
 ##### Layout of App #####
-
-#### Callbacks ####
-# Callback to update df used for plotting
 app.layout = html.Div(children=[
     html.Div(children=[
         html.H1(children='CDR Analyser'),  # Title
@@ -200,8 +201,7 @@ app.layout = html.Div(children=[
                 min_date_allowed=df['Date'].min(),
                 max_date_allowed=df['Date'].max(),
                 initial_visible_month=dt(2020, 6, 5),
-                date=str(dt(2020, 6, 17, 0, 0, 0)),
-                 display_format='DD-MMM-YY'
+                date=str(dt(2020, 6, 17, 0, 0, 0))
             ),  # Data Picker
             html.H5(
                 'To:'
@@ -211,8 +211,7 @@ app.layout = html.Div(children=[
                 min_date_allowed=df['Date'].min(),
                 max_date_allowed=df['Date'].max(),
                 initial_visible_month=dt(2020, 6, 5),
-                date=str(dt(2020, 6, 17, 0, 0, 0)),
-                display_format='DD-MMM-YY'
+                date=str(dt(2020, 6, 17, 0, 0, 0))
             ),
             dcc.RangeSlider(
                 id='duration-slider',
@@ -233,7 +232,7 @@ app.layout = html.Div(children=[
                 step=None,
                 marks=times,
                 dots=True,
-                value=[0, 48],
+                value=default_time_slider_val,
                 pushable=1
 
             ),  # Time Slider
@@ -244,7 +243,7 @@ app.layout = html.Div(children=[
                 id='select-caller-receiver',
                 options=[{'label': 'Only Caller', 'value': 1}]+[{'label': 'Only Receiver', 'value': 2}]+[
                     {'label': 'Either Caller or Reciever', 'value': 3}]+[{'label': 'Both Caller and Reciever', 'value': 4}],
-                value=3,
+                value=default_caller_receiver_val,
             ),  # Select if you want the select the numbers to be from Caller/Reciever/Both/Either
            
             html.H5(
@@ -267,8 +266,16 @@ app.layout = html.Div(children=[
                 value='None',
                 multi=True,
             ),  # Dropdown for Reciever,
-           
-           
+            html.H5(
+                'Find:'
+            ),
+            dcc.Dropdown(
+                id='find-dropdown',
+                options=[{'label': 'None', 'value': 'None'}] + \
+                [{'label': k, 'value': k} for k in pd.unique(df[['Caller','Receiver']].values.ravel())],
+                value='None',
+                multi=True,
+            ),   # Dropdown for finding,
             html.Div([
                 dcc.Upload(
                     id='upload-data',
@@ -276,22 +283,52 @@ app.layout = html.Div(children=[
                         'Drag and Drop or ',
                         html.A('Select a File')
                     ]),
-                    
+                    style={
+                        'width': '100%',
+                        'height': '60px',
+                        'lineHeight': '60px',
+                        'borderWidth': '1px',
+                        'borderStyle': 'dashed',
+                        'borderRadius': '5px',
+                        'textAlign': 'center',
+                        'margin-bottom':'12px',
+                        'margin-top':'12px'
+                    },
                     # Allow multiple files to be uploaded
                     multiple=False
                 ),
                 html.Div(id='output-data-upload'),
-            ])
+            ]),
+
+            html.Button('Reset Filters', id='reset-button', n_clicks=0)
             ],
             id='filters',lg=3),  # Filters
 
         dbc.Col(
            [ html.H3('Network Graph : '),
+
+
             dcc.Graph(
                 id='network-plot'
 
             ),
-            html.H5('The size of the dots denote the total duration of the caller/callee')],id='plot-area',lg=6),     # Network Plot
+
+            html.H5('The size of the dots denote the total duration of the caller/callee'),
+
+         	dcc.Markdown("""
+             		1. The Duration the selected person has spent on exchanging calls over time
+            		"""),
+         	dcc.Graph(id='duration-plot'),
+
+
+            ],  id='plot-area',lg=6
+
+
+            ),     # Network Plot
+
+
+
+
         dbc.Col(children=[
             html.H3('Statistics'),
             html.Div([
@@ -311,21 +348,15 @@ app.layout = html.Div(children=[
                 html.Pre(id='click-data', ),
             ], ),  # Click Data Container
 
+
             html.Div([
                 dcc.Markdown("""
                 **Select to see connected people** \n
                 Select using rectangle/lasso or by using your mouse.(Use Shift for multiple selections)
             """),
-            html.Div(children=[
-                 html.Div([
-                html.Button('Toggle to vizualize Components', id='toggle-components', n_clicks=0),
-            ],
-                
-            ),
-              html.Pre(id='selected-data', ),
-            ], )  
-            ])
-              # Selection Data Container
+                html.Pre(id='selected-data', ),
+            ],)  # Selection Data Container
+
 
 
         ],id='stats',lg=3)
@@ -337,6 +368,9 @@ app.layout = html.Div(children=[
     ),
     # Filtered Data
 ])
+
+#### Callbacks ####
+# Callback to update df used for plotting
 # Callback to filter dataframe
 # REMEMBER WHILE EDITING (RWI): THIS IS A TWO OUTPUT FUNCTION
 
@@ -427,17 +461,36 @@ def display_hover_data(hoverData, filtered_data):
 
 
 @app.callback(
-    Output('click-data', 'children'), #Suggest to put all extra plots in this callback's output...
+    [Output('click-data', 'children'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
     [Input('network-plot', 'clickData')])
 def display_click_data(clickData):
     if clickData is not None:
         nodeNumber = coords_to_node[(
             clickData['points'][0]['x'], clickData['points'][0]['y'])]
         # Filtering DF
-        return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns].to_string(index=False)
-    return "Click on a node to view more data"
+        new_df = df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns]
 
-components = []
+        return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns].to_string(index=False), plot_Duration(new_df)
+    return "Click on a node to view more data" #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+
+
+
+#Callback to output the new figure for Duration plot of selected node.
+def plot_Duration(new_df):
+
+	if new_df is not None:
+
+		x = sorted(new_df["Date"])
+		y = new_df["Duration"]
+		fig = go.Figure([ go.Scatter(x = x, y = y,
+	                           mode='lines+markers',
+	                            name='plot') ])  
+		return fig
+	else:
+		return None
+
+
+
 # Callback for Selected Data
 @app.callback(
     Output('selected-data', 'children'),
@@ -445,11 +498,8 @@ components = []
 def display_selected_data(selectedData, filtered_data):
     df = pd.read_json(filtered_data, orient='split')
     # TODO #3 Graph should also be filtered and only nodes in component should be displayed
-    print(selectedData)
     if selectedData is not None:
-       
-        global components
-        l=[]
+        l = []
         for point in selectedData['points']:
             l.append(node_to_num[coords_to_node[point['x'], point['y']]])
         components = bfs(l, df)
@@ -465,32 +515,7 @@ def display_selected_data(selectedData, filtered_data):
         return s
     return json.dumps(selectedData, indent=2)
 
-@app.callback(
-    Output(component_id='receiver-dropdown', component_property='value'), [Input('toggle-components', 'n_clicks')]
-)
-def update_receiver_value(n_clicks):
-    if n_clicks%2 == 1:
-        k = []
-        global components
-        for x in components:
-            for y in x:
-                k.append(y)
-        return k
-    else:
-        return 'None'
-@app.callback(
-    Output(component_id='caller-dropdown', component_property='value'), [Input('toggle-components', 'n_clicks')]
-)
-def update_caller_value(n_clicks):
-    if n_clicks%2 == 1:
-        k = []
-        global components
-        for x in components:
-            for y in x:
-                k.append(y)
-        return k
-    else:
-        return 'None'
+
 # Callback to update network plot
 @app.callback(
     Output(component_id='network-plot', component_property='figure'),
@@ -519,6 +544,23 @@ def update_phone_div_caller(selected_date1, selected_date2):
 )
 def update_phone_div_receiver(selected_date1, selected_date2):
     return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))]['Receiver'].unique()]
+
+
+@app.callback(
+    Output(component_id='find-dropdown', component_property='options'),
+    [Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date')]
+)
+def update_phone_div_receiver(selected_date1, selected_date2):
+    return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in pd.unique(df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))][['Receiver','Caller']].values.ravel())]
+
+
+# Reset Filters
+@app.callback(
+	[Output('date-picker1', 'date'), Output('date-picker2', 'date'), Output('duration-slider', 'value'), Output('time-slider', 'value'), Output('select-caller-receiver', 'value'), Output('caller-dropdown', 'value'), Output('receiver-dropdown', 'value'), Output('find-dropdown', 'value')],
+	[Input('reset-button', 'n_clicks')]
+	)
+def ResetFilters(button_reset):
+	return str(dt(2020, 6, 17, 0, 0, 0)), str(dt(2020, 6, 17, 0, 0, 0)), default_duration_slider_val, default_time_slider_val, default_caller_receiver_val, 'None', 'None', 'None'
 
 
 #### Run Server ####
