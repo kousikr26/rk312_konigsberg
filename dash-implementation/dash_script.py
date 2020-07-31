@@ -35,7 +35,11 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = 'CDR/IPDR Analyser'
 #### Default Variables ####
 default_duration_slider_val = [0, 100]
-default_time_slider_val = ['00:00', '24:00']
+default_time_slider_val = [0,48]
+default_caller_receiver_val = 3
+
+
+
 # Loop to generate marks for Time
 time_str = ['0', '0', ':', '0', '0']
 times = {0: {'label': "".join(time_str), "style": {
@@ -258,7 +262,7 @@ app.layout = html.Div(children=[
                 step=None,
                 marks=times,
                 dots=True,
-                value=[0, 48],
+                value=default_time_slider_val,
                 pushable=1
 
             ),  # Time Slider
@@ -270,7 +274,7 @@ app.layout = html.Div(children=[
                 id='select-caller-receiver',
                 options=[{'label': 'Only Caller', 'value': 1}]+[{'label': 'Only Receiver', 'value': 2}]+[
                     {'label': 'Either Caller or Reciever', 'value': 3}]+[{'label': 'Both Caller and Reciever', 'value': 4}],
-                value=3,
+                value=default_caller_receiver_val,
             ),  # Select if you want the select the numbers to be from Caller/Reciever/Both/Either
            
             html.H5(
@@ -327,17 +331,37 @@ app.layout = html.Div(children=[
                     multiple=False
                 ),
                 html.Div(id='output-data-upload'),
-            ])
+            ]),
+
+            html.Button('Reset Filters', id='reset-button', n_clicks=0)
             ],
             id='filters',lg=3),  # Filters  #Child 2.1 done
 
         dbc.Col(
            [ html.H3('Network Graph : '),
+
+
             dcc.Graph(
                 id='network-plot'
 
             ),
-            html.H5('The size of the dots denote the total duration of the caller/callee')],id='plot-area',lg=6),     # Network Plot
+
+            html.H5('The size of the dots denote the total duration of the caller/callee'),
+
+         	dcc.Markdown("""
+             		1. The Duration the selected person has spent on exchanging calls over time
+            		"""),
+         	dcc.Graph(id='duration-plot'),
+
+
+            ],  id='plot-area',lg=6
+
+
+            ),     # Network Plot
+
+
+
+
         dbc.Col(children=[
             html.H3('Statistics'),
             html.Div([
@@ -359,6 +383,7 @@ app.layout = html.Div(children=[
                     id='pie-chart'
                 )
             ], ),  # Click Data Container
+
 
             html.Div([
                 dcc.Markdown("""
@@ -471,7 +496,7 @@ def display_hover_data(hoverData, filtered_data):
 
 
 @app.callback(
-    [Output('click-data', 'children'), Output('pie-chart','figure')],
+    [Output('click-data', 'children'), Output('pie-chart','figure'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
     [Input('network-plot', 'clickData')])
 def display_click_data(clickData):
     if clickData is not None:
@@ -483,8 +508,27 @@ def display_click_data(clickData):
         fig.update_layout(showlegend=False)
         print(fig)
         # Filtering DF
-        return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns].to_string(index=False), fig
-    return "Click on a node to view more data", go.Figure()
+        new_df = df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns]
+
+        return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns].to_string(index=False), fig, plot_Duration(new_df)
+    return "Click on a node to view more data",go.Figure() #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+
+
+
+#Callback to output the new figure for Duration plot of selected node.
+def plot_Duration(new_df):
+
+	if new_df is not None:
+
+		x = sorted(new_df["Date"])
+		y = new_df["Duration"]
+		fig = go.Figure([ go.Scatter(x = x, y = y,
+	                           mode='lines+markers',
+	                            name='plot') ])  
+		return fig
+	else:
+		return None
+
 
 
 # Callback for Selected Data
@@ -546,8 +590,17 @@ def update_phone_div_receiver(selected_date1, selected_date2):
     Output(component_id='find-dropdown', component_property='options'),
     [Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date')]
 )
-def update_phone_div_receiver1(selected_date1, selected_date2):
+def update_phone_div_receiver(selected_date1, selected_date2):
     return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in pd.unique(df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))][['Receiver','Caller']].values.ravel())]
+
+
+# Reset Filters
+@app.callback(
+	[Output('date-picker1', 'date'), Output('date-picker2', 'date'), Output('duration-slider', 'value'), Output('time-slider', 'value'), Output('select-caller-receiver', 'value'), Output('caller-dropdown', 'value'), Output('receiver-dropdown', 'value'), Output('find-dropdown', 'value')],
+	[Input('reset-button', 'n_clicks')]
+	)
+def ResetFilters(button_reset):
+	return str(dt(2020, 6, 17, 0, 0, 0)), str(dt(2020, 6, 17, 0, 0, 0)), default_duration_slider_val, default_time_slider_val, default_caller_receiver_val, 'None', 'None', 'None'
 
 
 #### Run Server ####
