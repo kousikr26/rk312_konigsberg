@@ -34,7 +34,10 @@ app.title = 'CDR/IPDR Analyser'
 #### Default Variables ####
 default_duration_slider_val = [0, 100]
 default_time_slider_val = ['00:00', '24:00']
+<<<<<<< HEAD
 date_format='%d-%m-%Y'
+=======
+>>>>>>> animesh-dev
 # Loop to generate marks for Time
 time_str = ['0', '0', ':', '0', '0']
 times = {0: {'label': "".join(time_str), "style": {
@@ -70,7 +73,11 @@ def preprocess_data(df):
     nodes = np.union1d(df['Caller'].unique(), df['Receiver'].unique())
     # Define Color
     df['Dura_color'] = (df['Duration']/df['Duration'].max()).apply(viridis)
+<<<<<<< HEAD
     df['Date'] = df['Date'].apply(lambda x:pd.to_datetime(x,format=date_format)).dt.date
+=======
+    df['Date'] = df['Date'].apply(pd.to_datetime).dt.date
+>>>>>>> animesh-dev
 
 
     df['Caller_node'] = df['Caller'].apply(
@@ -427,7 +434,7 @@ def display_hover_data(hoverData, filtered_data):
 
 
 @app.callback(
-    Output('click-data', 'children'),
+    [Output('click-data', 'children'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
     [Input('network-plot', 'clickData')])
 def display_click_data(clickData):
     if clickData is not None:
@@ -517,14 +524,6 @@ def update_phone_div_caller(selected_date1, selected_date2):
 )
 def update_phone_div_receiver(selected_date1, selected_date2):
     return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))]['Receiver'].unique()]
-
-
-@app.callback(
-    Output(component_id='find-dropdown', component_property='options'),
-    [Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date')]
-)
-def update_phone_div_receiver(selected_date1, selected_date2):
-    return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in pd.unique(df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))][['Receiver','Caller']].values.ravel())]
 
 
 #### Run Server ####
