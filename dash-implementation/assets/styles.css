@@ -55,3 +55,14 @@ h5{
 margin-right: 10%;
 margin-left: 10%;
 }
+#toggle-components{
+    width: 40%;
+    height: 40px;
+    line-height:20px;
+    border-width: 1px;
+    border-radius: 5px;
+    text-align: center;
+    margin-bottom:12px;
+    margin-top:12px;
+    margin-left:60%;
+}

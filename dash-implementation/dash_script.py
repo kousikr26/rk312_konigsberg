@@ -327,22 +327,16 @@ app.layout = html.Div(children=[
                 **Select to see connected people** \n
                 Select using rectangle/lasso or by using your mouse.(Use Shift for multiple selections)
             """),
-            html.Div([
-                html.Button('Toggle to vizualize Components', id='btn', n_clicks=0)
+            html.Div(children=[
+                 html.Div([
+                html.Button('Toggle to vizualize Components', id='toggle-components', n_clicks=0),
             ],
-                style={
-                    'width': '100%',
-                    'height': '60px',
-                    'lineHeight': '60px',
-                    'borderWidth': '1px',
-                    'borderRadius': '5px',
-                    'textAlign': 'center',
-                    'margin-bottom':'12px',
-                    'margin-top':'12px'
-                },
+                
             ),
-                html.Pre(id='selected-data', ),
-            ], )  # Selection Data Container
+              html.Pre(id='selected-data', ),
+            ], )  
+            ])
+              # Selection Data Container
 
 
         ],id='stats',lg=3)
@@ -481,7 +475,7 @@ def display_selected_data(selectedData, filtered_data):
     return json.dumps(selectedData, indent=2)
 
 @app.callback(
-    Output(component_id='receiver-dropdown', component_property='value'), [Input('btn', 'n_clicks')]
+    Output(component_id='receiver-dropdown', component_property='value'), [Input('toggle-components', 'n_clicks')]
 )
 def update_receiver_value(n_clicks):
     if n_clicks%2 == 1:
@@ -494,7 +488,7 @@ def update_receiver_value(n_clicks):
     else:
         return 'None'
 @app.callback(
-    Output(component_id='caller-dropdown', component_property='value'), [Input('btn', 'n_clicks')]
+    Output(component_id='caller-dropdown', component_property='value'), [Input('toggle-components', 'n_clicks')]
 )
 def update_caller_value(n_clicks):
     if n_clicks%2 == 1:
