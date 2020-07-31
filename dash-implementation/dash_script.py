@@ -172,6 +172,9 @@ def plot_network(df):
 
 
 ##### Layout of App #####
+
+#### Callbacks ####
+# Callback to update df used for plotting
 app.layout = html.Div(children=[
     html.Div(children=[
         html.H1(children='CDR Analyser'),  # Title
@@ -313,8 +316,16 @@ app.layout = html.Div(children=[
                 **Select to see connected people** \n
                 Select using rectangle/lasso or by using your mouse.(Use Shift for multiple selections)
             """),
-                html.Pre(id='selected-data', ),
-            ], )  # Selection Data Container
+            html.Div(children=[
+                 html.Div([
+                html.Button('Toggle to vizualize Components', id='toggle-components', n_clicks=0),
+            ],
+                
+            ),
+              html.Pre(id='selected-data', ),
+            ], )  
+            ])
+              # Selection Data Container
 
 
         ],id='stats',lg=3)
@@ -326,9 +337,6 @@ app.layout = html.Div(children=[
     ),
     # Filtered Data
 ])
-
-#### Callbacks ####
-# Callback to update df used for plotting
 # Callback to filter dataframe
 # REMEMBER WHILE EDITING (RWI): THIS IS A TWO OUTPUT FUNCTION
 
@@ -429,7 +437,7 @@ def display_click_data(clickData):
         return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns].to_string(index=False)
     return "Click on a node to view more data"
 
-
+components = []
 # Callback for Selected Data
 @app.callback(
     Output('selected-data', 'children'),
@@ -438,7 +446,8 @@ def display_selected_data(selectedData, filtered_data):
     df = pd.read_json(filtered_data, orient='split')
     # TODO #3 Graph should also be filtered and only nodes in component should be displayed
     if selectedData is not None:
-        l = []
+        global components
+        l=[]
         for point in selectedData['points']:
             l.append(node_to_num[coords_to_node[point['x'], point['y']]])
         components = bfs(l, df)
@@ -454,7 +463,32 @@ def display_selected_data(selectedData, filtered_data):
         return s
     return json.dumps(selectedData, indent=2)
 
-
+@app.callback(
+    Output(component_id='receiver-dropdown', component_property='value'), [Input('toggle-components', 'n_clicks')]
+)
+def update_receiver_value(n_clicks):
+    if n_clicks%2 == 1:
+        k = []
+        global components
+        for x in components:
+            for y in x:
+                k.append(y)
+        return k
+    else:
+        return 'None'
+@app.callback(
+    Output(component_id='caller-dropdown', component_property='value'), [Input('toggle-components', 'n_clicks')]
+)
+def update_caller_value(n_clicks):
+    if n_clicks%2 == 1:
+        k = []
+        global components
+        for x in components:
+            for y in x:
+                k.append(y)
+        return k
+    else:
+        return 'None'
 # Callback to update network plot
 @app.callback(
     Output(component_id='network-plot', component_property='figure'),
