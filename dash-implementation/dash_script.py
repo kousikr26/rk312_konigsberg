@@ -108,7 +108,7 @@ def plot_network(df):
         num_to_node[x['Caller']] = x['Caller_node']
         num_to_node[x['Receiver']] = x['Receiver_node']
         edges_x,edges_y=addEdge((x0,y0),(x1,y1),[],[])
-        print('Edges:',x0,y0 ,edges_x)
+        
         edge_trace.append(dict(type='scatter',
                                x=edges_x, y=edges_y,
                                showlegend=False,
