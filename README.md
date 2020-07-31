@@ -1,4 +1,4 @@
 # cdr-viz
-## download requirements
-## run python dash-implementation/dash_script
+## pip install -r requirements
+## run python3 dash-implementation/dash_script
 ### ready to go
