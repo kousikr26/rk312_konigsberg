@@ -163,7 +163,7 @@ def plot_network(df):
     fig.update_layout(
          hoverlabel = dict(bgcolor='white',font_size = 15,font_family = 'Rockwell')
     )
-    # fig.update_layout(clickmode='event+select')  # Event method
+    fig.update_layout(clickmode='event+select')  # Event method
     fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1), plot_bgcolor='rgb(255,255,255)')
     #fig.update_traces(marker_size=20)  # marker size
     return fig
@@ -427,7 +427,7 @@ def display_hover_data(hoverData, filtered_data):
 
 
 @app.callback(
-    [Output('click-data', 'children'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
+    Output('click-data', 'children'), #Suggest to put all extra plots in this callback's output...
     [Input('network-plot', 'clickData')])
 def display_click_data(clickData):
     if clickData is not None:
@@ -445,7 +445,9 @@ components = []
 def display_selected_data(selectedData, filtered_data):
     df = pd.read_json(filtered_data, orient='split')
     # TODO #3 Graph should also be filtered and only nodes in component should be displayed
+    print(selectedData)
     if selectedData is not None:
+       
         global components
         l=[]
         for point in selectedData['points']:
