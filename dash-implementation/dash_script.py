@@ -107,13 +107,13 @@ def plot_network(df):
         node_to_num[x['Receiver_node']] = x['Receiver']
         num_to_node[x['Caller']] = x['Caller_node']
         num_to_node[x['Receiver']] = x['Receiver_node']
-        edges_x,edges_y=addEdge((x0,y0),(x1,y1),[],[])
-        print('Edges:',x0,y0 ,edges_x)
+        edges_x,edges_y=addEdge([x0,y0],[x1,y1],[],[], 0.6, 'end', 20, 30, 15)
+        print("NEWWW",x0,x1,y0,y1,edges_x,edges_y)
         edge_trace.append(dict(type='scatter',
                                x=edges_x, y=edges_y,
                                showlegend=False,
                                line=dict(
-                                   width=2, color='rgba'+str(x['Dura_color']).replace(']', ')').replace('[', '(')),
+                                   width=2, color='rgba(0,0,0,1)'),
                                hoverinfo='none',
                                mode='lines',
         ))  # Graph object for each connection
@@ -131,7 +131,8 @@ def plot_network(df):
         hover_list.append(str(node_to_num[node]))
         node_x.append(x)
         node_y.append(y)
-        total_duration.append(27*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
+        total_duration.append(15*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
+    print(np.mean(np.array(total_duration)))
     node_trace = go.Scatter(
         x=node_x, y=node_y,
         mode='markers',
@@ -140,14 +141,14 @@ def plot_network(df):
         showlegend=False,
         marker=dict(
             size=total_duration,
-            showscale=True,
+            showscale=False,
             line_width=2,
             line_color='black'))  # Object for point scatter plot
     fig = go.Figure(data=edge_trace+[node_trace],
                     layout=go.Layout(
-                   
+                        
                     titlefont_size=16,
-                 
+                    
 
                     hovermode='closest',
                     margin=dict(b=20, l=5, r=5, t=40),

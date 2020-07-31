@@ -14,7 +14,7 @@ import math
 # arrowLength is the length of the arrowhead
 # arrowAngle is the angle in degrees that the arrowhead makes with the edge
 # dotSize is the plotly scatter dot size you are using (used to even out line spacing when you have a mix of edge lengths)
-def addEdge(start, end, edge_x, edge_y, lengthFrac=1, arrowPos = None, arrowLength=0.25, arrowAngle = 30, dotSize=20):
+def addEdge(start, end, edge_x, edge_y, lengthFrac=1, arrowPos = None, arrowLength=0.025, arrowAngle = 30, dotSize=20):
     
     # Get start and end cartesian coordinates
     x0, y0 = start
@@ -37,10 +37,10 @@ def addEdge(start, end, edge_x, edge_y, lengthFrac=1, arrowPos = None, arrowLeng
     
     # Append line corresponding to the edge
     edge_x.append(x0)
-    edge_x.append(x1)
+    edge_x.append(x1-skipX/2)
     edge_x.append(None) # Prevents a line being drawn from end of this edge to start of next edge
     edge_y.append(y0)
-    edge_y.append(y1)
+    edge_y.append(y1-skipY/2)
     edge_y.append(None)
     
     # Draw arrow
@@ -70,14 +70,15 @@ def addEdge(start, end, edge_x, edge_y, lengthFrac=1, arrowPos = None, arrowLeng
         edge_y.append(None)
         
         # And second arrowhead
-        dx = arrowLength * math.sin(math.radians(eta - arrowAngle))
-        dy = arrowLength * math.cos(math.radians(eta - arrowAngle))    
+        dx2 = arrowLength * math.sin(math.radians(eta - arrowAngle))
+        dy2 = arrowLength * math.cos(math.radians(eta - arrowAngle))    
         edge_x.append(pointx)
-        edge_x.append(pointx - signx**2 * signy * dx)
-        edge_x.append(None)
+        edge_x.append(pointx - signx**2 * signy * dx2)
+        # edge_x.append(None)
         edge_y.append(pointy)
+        edge_y.append(pointy - signx**2 * signy * dy2)
+        # edge_y.append(None)
+        edge_x.append(pointx - signx**2 * signy * dx)
         edge_y.append(pointy - signx**2 * signy * dy)
-        edge_y.append(None)
-    
     
     return edge_x, edge_y
