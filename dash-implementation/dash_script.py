@@ -34,6 +34,7 @@ app.title = 'CDR/IPDR Analyser'
 #### Default Variables ####
 default_duration_slider_val = [0, 100]
 default_time_slider_val = ['00:00', '24:00']
+date_format='%d-%m-%Y'
 # Loop to generate marks for Time
 time_str = ['0', '0', ':', '0', '0']
 times = {0: {'label': "".join(time_str), "style": {
@@ -69,7 +70,7 @@ def preprocess_data(df):
     nodes = np.union1d(df['Caller'].unique(), df['Receiver'].unique())
     # Define Color
     df['Dura_color'] = (df['Duration']/df['Duration'].max()).apply(viridis)
-    df['Date'] = df['Date'].apply(pd.to_datetime).dt.date
+    df['Date'] = df['Date'].apply(lambda x:pd.to_datetime(x,format=date_format)).dt.date
 
 
     df['Caller_node'] = df['Caller'].apply(
@@ -144,10 +145,7 @@ def plot_network(df):
             line_color='black'))  # Object for point scatter plot
     fig = go.Figure(data=edge_trace+[node_trace],
                     layout=go.Layout(
-                   
-                    titlefont_size=16,
-                 
-
+                    titlefont_size=16,              
                     hovermode='closest',
                     margin=dict(b=20, l=5, r=5, t=40),
                     annotations=[dict(
@@ -197,7 +195,8 @@ app.layout = html.Div(children=[
                 min_date_allowed=df['Date'].min(),
                 max_date_allowed=df['Date'].max(),
                 initial_visible_month=dt(2020, 6, 5),
-                date=str(dt(2020, 6, 17, 0, 0, 0))
+                date=str(dt(2020, 6, 17, 0, 0, 0)),
+                 display_format='DD-MMM-YY'
             ),  # Data Picker
             html.H5(
                 'To:'
@@ -207,7 +206,8 @@ app.layout = html.Div(children=[
                 min_date_allowed=df['Date'].min(),
                 max_date_allowed=df['Date'].max(),
                 initial_visible_month=dt(2020, 6, 5),
-                date=str(dt(2020, 6, 17, 0, 0, 0))
+                date=str(dt(2020, 6, 17, 0, 0, 0)),
+                display_format='DD-MMM-YY'
             ),
             dcc.RangeSlider(
                 id='duration-slider',
@@ -262,16 +262,8 @@ app.layout = html.Div(children=[
                 value='None',
                 multi=True,
             ),  # Dropdown for Reciever,
-            html.H5(
-                'Find:'
-            ),
-            dcc.Dropdown(
-                id='find-dropdown',
-                options=[{'label': 'None', 'value': 'None'}] + \
-                [{'label': k, 'value': k} for k in pd.unique(df[['Caller','Receiver']].values.ravel())],
-                value='None',
-                multi=True,
-            ),   # Dropdown for finding,
+           
+           
             html.Div([
                 dcc.Upload(
                     id='upload-data',
@@ -279,17 +271,7 @@ app.layout = html.Div(children=[
                         'Drag and Drop or ',
                         html.A('Select a File')
                     ]),
-                    style={
-                        'width': '100%',
-                        'height': '60px',
-                        'lineHeight': '60px',
-                        'borderWidth': '1px',
-                        'borderStyle': 'dashed',
-                        'borderRadius': '5px',
-                        'textAlign': 'center',
-                        'margin-bottom':'12px',
-                        'margin-top':'12px'
-                    },
+                    
                     # Allow multiple files to be uploaded
                     multiple=False
                 ),
