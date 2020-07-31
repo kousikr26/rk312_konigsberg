@@ -28,13 +28,14 @@ external_stylesheets = [dbc.themes.SANDSTONE]
 
 # Load  Data
 df = pd.read_csv('./data/data.csv')
+df2 = pd.read_csv('./data/ipdr_data.csv')
+
 #### Create App ###
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = 'CDR/IPDR Analyser'
 #### Default Variables ####
 default_duration_slider_val = [0, 100]
 default_time_slider_val = ['00:00', '24:00']
-date_format='%d-%m-%Y'
 # Loop to generate marks for Time
 time_str = ['0', '0', ':', '0', '0']
 times = {0: {'label': "".join(time_str), "style": {
@@ -61,26 +62,45 @@ num_to_node = {}  #Dictionary that stores numbers to node
 data_columns = ["Caller", "Receiver", "Date",
                 "Time", "Duration", "TowerID", "IMEI"]
 
+data_columns_ipdr = ["IMEI","Private IP","Private Port", "Public IP", "Public Port", "Dest IP","DEST PORT", "MSISDN", "IMSI", "Start Date","Start Time",\
+    "End Date","End Time", "CELL_ID", "Uplink Volume","Downlink Volume","Total Volume","I_RATTYPE"]
+
+
+ports_to_apps = {'DEST PORT':'App','5223':'WhatsApp','5228':'WhatsApp', '4244':'WhatsApp', '5222':'WhatsApp', '5242':'WhatsApp','443':'Skype',\
+    '3478-3481':'Skype','49152-65535':'Skype','80':'Web connection','8080':'Web Connection', \
+        '8081': 'Web Connection', '993':'IMAP', '143':'IMAP', '8024':'iTunes', '8027':'iTunes', '8013':'iTunes', \
+            '8017':'iTunes', '8003':'iTunes', '7275':'iTunes', '8025':'iTunes', '8009':'iTunes',\
+                '58128': 'Xsan', '51637':'Xsan', '61076':'Xsan','40020':'Microsoft Online Games', '40017':'Microsoft Various Games', \
+                    '40023':'Microsoft Online Games',\
+                    '40019':'Microsoft Online Games', '40001':'Microsoft Online Games', '40004':'Microsoft Online Games', \
+                        '40034':'Microsoft Online Games', '40031':'Microsoft Online Games', '40029':'Microsoft Online Games',\
+                              '40005':'Microsoft Online Games', '40026': 'Microsoft Online Games', '40008': 'Microsoft Online Games',\
+                                  '40032':'Microsoft Online Games'}   # did not take '443':'SSL, Web connection' to avoid double 443
 
 
 # Color scale of edges
 viridis = cm.get_cmap('viridis', 12)
-def preprocess_data(df):
+def preprocess_data(df,df2):
     # nodes
     nodes = np.union1d(df['Caller'].unique(), df['Receiver'].unique())
     # Define Color
     df['Dura_color'] = (df['Duration']/df['Duration'].max()).apply(viridis)
-    df['Date'] = df['Date'].apply(lambda x:pd.to_datetime(x,format=date_format)).dt.date
+    df['Date'] = df['Date'].apply(pd.to_datetime).dt.date
 
 
     df['Caller_node'] = df['Caller'].apply(
         lambda x: list(nodes).index(x))  # Caller Nodes
+    
     df['Receiver_node'] = df['Receiver'].apply(lambda x: list(nodes).index(x))
+
+    df2['IMEI_node'] = df2['IMEI'].apply(lambda x: list(nodes).index(x))
+    df2['App_name'] = df2['DEST PORT'].apply(lambda x:ports_to_apps[str(x)])
+
     coords_to_node.clear()
     num_to_node.clear()
     node_to_num.clear()
 
-preprocess_data(df)
+preprocess_data(df,df2)
 #### Plots ####
 # Plot Graph of calls
 
@@ -108,13 +128,12 @@ def plot_network(df):
         node_to_num[x['Receiver_node']] = x['Receiver']
         num_to_node[x['Caller']] = x['Caller_node']
         num_to_node[x['Receiver']] = x['Receiver_node']
-        edges_x,edges_y=addEdge([x0,y0],[x1,y1],[],[], 0.6, 'end', 20, 30, 15)
-        
+        edges_x,edges_y=addEdge((x0,y0),(x1,y1),[],[])
         edge_trace.append(dict(type='scatter',
                                x=edges_x, y=edges_y,
                                showlegend=False,
                                line=dict(
-                                   width=2, color='rgba(0,0,0,1)'),
+                                   width=2, color='rgba'+str(x['Dura_color']).replace(']', ')').replace('[', '(')),
                                hoverinfo='none',
                                mode='lines',
         ))  # Graph object for each connection
@@ -132,8 +151,7 @@ def plot_network(df):
         hover_list.append(str(node_to_num[node]))
         node_x.append(x)
         node_y.append(y)
-        total_duration.append(15*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
-    print(np.mean(np.array(total_duration)))
+        total_duration.append(27*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
     node_trace = go.Scatter(
         x=node_x, y=node_y,
         mode='markers',
@@ -142,12 +160,15 @@ def plot_network(df):
         showlegend=False,
         marker=dict(
             size=total_duration,
-            showscale=False,
+            showscale=True,
             line_width=2,
             line_color='black'))  # Object for point scatter plot
     fig = go.Figure(data=edge_trace+[node_trace],
                     layout=go.Layout(
+                   
                     titlefont_size=16,
+                 
+
                     hovermode='closest',
                     margin=dict(b=20, l=5, r=5, t=40),
                     annotations=[dict(
@@ -163,7 +184,7 @@ def plot_network(df):
     fig.update_layout(
          hoverlabel = dict(bgcolor='white',font_size = 15,font_family = 'Rockwell')
     )
-    fig.update_layout(clickmode='event+select')  # Event method
+    # fig.update_layout(clickmode='event+select')  # Event method
     fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1), plot_bgcolor='rgb(255,255,255)')
     #fig.update_traces(marker_size=20)  # marker size
     return fig
@@ -172,10 +193,9 @@ def plot_network(df):
 
 
 ##### Layout of App #####
-
-#### Callbacks ####
-# Callback to update df used for plotting
 app.layout = html.Div(children=[
+
+    #Child 1
     html.Div(children=[
         html.H1(children='CDR Analyser'),  # Title
         html.H3(children='''
@@ -187,21 +207,26 @@ app.layout = html.Div(children=[
         html.H4(id='message'),  # Message
     ],id='header-text'),
 
+    #Child 2
     dbc.Row(children=[
+
+        #Child 2.1
         dbc.Col(children=[
+            #2.1.1
             html.H3(
                 'Filters'
             ),
+            #2.1.2
             html.H5(
                 'From:'
             ),
+            #2.1.3
             dcc.DatePickerSingle(
                 id='date-picker1',
                 min_date_allowed=df['Date'].min(),
                 max_date_allowed=df['Date'].max(),
                 initial_visible_month=dt(2020, 6, 5),
-                date=str(dt(2020, 6, 17, 0, 0, 0)),
-                 display_format='DD-MMM-YY'
+                date=str(dt(2020, 6, 17, 0, 0, 0))
             ),  # Data Picker
             html.H5(
                 'To:'
@@ -211,9 +236,9 @@ app.layout = html.Div(children=[
                 min_date_allowed=df['Date'].min(),
                 max_date_allowed=df['Date'].max(),
                 initial_visible_month=dt(2020, 6, 5),
-                date=str(dt(2020, 6, 17, 0, 0, 0)),
-                display_format='DD-MMM-YY'
+                date=str(dt(2020, 6, 17, 0, 0, 0))
             ),
+            #2.1.6
             dcc.RangeSlider(
                 id='duration-slider',
                 min=0,
@@ -240,6 +265,7 @@ app.layout = html.Div(children=[
             html.H5(
                 'Condition for Caller/Reciever'
             ),
+            #2.1.9
             dcc.Dropdown(
                 id='select-caller-receiver',
                 options=[{'label': 'Only Caller', 'value': 1}]+[{'label': 'Only Receiver', 'value': 2}]+[
@@ -260,6 +286,7 @@ app.layout = html.Div(children=[
             html.H5(
                 'Select Reciever:'
             ),
+            #2.1.13
             dcc.Dropdown(
                 id='receiver-dropdown',
                 options=[{'label': 'None', 'value': 'None'}] + \
@@ -267,8 +294,17 @@ app.layout = html.Div(children=[
                 value='None',
                 multi=True,
             ),  # Dropdown for Reciever,
-           
-           
+            html.H5(
+                'Find:'
+            ),
+            dcc.Dropdown(
+                id='find-dropdown',
+                options=[{'label': 'None', 'value': 'None'}] + \
+                [{'label': k, 'value': k} for k in pd.unique(df[['Caller','Receiver']].values.ravel())],
+                value='None',
+                multi=True,
+            ),   # Dropdown for finding,
+            #2.1.16
             html.Div([
                 dcc.Upload(
                     id='upload-data',
@@ -276,14 +312,24 @@ app.layout = html.Div(children=[
                         'Drag and Drop or ',
                         html.A('Select a File')
                     ]),
-                    
+                    style={
+                        'width': '100%',
+                        'height': '60px',
+                        'lineHeight': '60px',
+                        'borderWidth': '1px',
+                        'borderStyle': 'dashed',
+                        'borderRadius': '5px',
+                        'textAlign': 'center',
+                        'margin-bottom':'12px',
+                        'margin-top':'12px'
+                    },
                     # Allow multiple files to be uploaded
                     multiple=False
                 ),
                 html.Div(id='output-data-upload'),
             ])
             ],
-            id='filters',lg=3),  # Filters
+            id='filters',lg=3),  # Filters  #Child 2.1 done
 
         dbc.Col(
            [ html.H3('Network Graph : '),
@@ -309,6 +355,9 @@ app.layout = html.Div(children=[
                 Click on points in the graph to get the call data records.
             """),
                 html.Pre(id='click-data', ),
+                dcc.Graph(
+                    id='pie-chart'
+                )
             ], ),  # Click Data Container
 
             html.Div([
@@ -316,16 +365,8 @@ app.layout = html.Div(children=[
                 **Select to see connected people** \n
                 Select using rectangle/lasso or by using your mouse.(Use Shift for multiple selections)
             """),
-            html.Div(children=[
-                 html.Div([
-                html.Button('Toggle to vizualize Components', id='toggle-components', n_clicks=0),
-            ],
-                
-            ),
-              html.Pre(id='selected-data', ),
-            ], )  
-            ])
-              # Selection Data Container
+                html.Pre(id='selected-data', ),
+            ], )  # Selection Data Container
 
 
         ],id='stats',lg=3)
@@ -337,6 +378,9 @@ app.layout = html.Div(children=[
     ),
     # Filtered Data
 ])
+
+#### Callbacks ####
+# Callback to update df used for plotting
 # Callback to filter dataframe
 # REMEMBER WHILE EDITING (RWI): THIS IS A TWO OUTPUT FUNCTION
 
@@ -354,7 +398,7 @@ def update_filtered_div_caller(contents, selected_date1, selected_date2, selecte
         decoded = base64.b64decode(content_string)
         global df
         df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-        preprocess_data(df)
+        preprocess_data(df,df2)
 
     filtered_df = df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date'] <= pd.to_datetime(selected_date2))
                      & ((df['Duration'] >= selected_duration[0]) & (df['Duration'] <= selected_duration[1]))
@@ -427,17 +471,22 @@ def display_hover_data(hoverData, filtered_data):
 
 
 @app.callback(
-    Output('click-data', 'children'), #Suggest to put all extra plots in this callback's output...
+    [Output('click-data', 'children'), Output('pie-chart','figure')],
     [Input('network-plot', 'clickData')])
 def display_click_data(clickData):
     if clickData is not None:
         nodeNumber = coords_to_node[(
             clickData['points'][0]['x'], clickData['points'][0]['y'])]
+        groups=df2[df2['IMEI_node']==nodeNumber].groupby('App_name')['IMEI'].count()
+        print(groups,nodeNumber)
+        fig = go.Figure(data=dict(type='pie',values=groups,labels=groups.index))
+        fig.update_layout(showlegend=False)
+        print(fig)
         # Filtering DF
-        return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns].to_string(index=False)
-    return "Click on a node to view more data"
+        return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns].to_string(index=False), fig
+    return "Click on a node to view more data", go.Figure()
 
-components = []
+
 # Callback for Selected Data
 @app.callback(
     Output('selected-data', 'children'),
@@ -445,11 +494,8 @@ components = []
 def display_selected_data(selectedData, filtered_data):
     df = pd.read_json(filtered_data, orient='split')
     # TODO #3 Graph should also be filtered and only nodes in component should be displayed
-    print(selectedData)
     if selectedData is not None:
-       
-        global components
-        l=[]
+        l = []
         for point in selectedData['points']:
             l.append(node_to_num[coords_to_node[point['x'], point['y']]])
         components = bfs(l, df)
@@ -465,32 +511,7 @@ def display_selected_data(selectedData, filtered_data):
         return s
     return json.dumps(selectedData, indent=2)
 
-@app.callback(
-    Output(component_id='receiver-dropdown', component_property='value'), [Input('toggle-components', 'n_clicks')]
-)
-def update_receiver_value(n_clicks):
-    if n_clicks%2 == 1:
-        k = []
-        global components
-        for x in components:
-            for y in x:
-                k.append(y)
-        return k
-    else:
-        return 'None'
-@app.callback(
-    Output(component_id='caller-dropdown', component_property='value'), [Input('toggle-components', 'n_clicks')]
-)
-def update_caller_value(n_clicks):
-    if n_clicks%2 == 1:
-        k = []
-        global components
-        for x in components:
-            for y in x:
-                k.append(y)
-        return k
-    else:
-        return 'None'
+
 # Callback to update network plot
 @app.callback(
     Output(component_id='network-plot', component_property='figure'),
@@ -519,6 +540,14 @@ def update_phone_div_caller(selected_date1, selected_date2):
 )
 def update_phone_div_receiver(selected_date1, selected_date2):
     return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))]['Receiver'].unique()]
+
+
+@app.callback(
+    Output(component_id='find-dropdown', component_property='options'),
+    [Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date')]
+)
+def update_phone_div_receiver1(selected_date1, selected_date2):
+    return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in pd.unique(df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))][['Receiver','Caller']].values.ravel())]
 
 
 #### Run Server ####
