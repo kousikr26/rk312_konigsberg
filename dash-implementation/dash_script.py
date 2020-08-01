@@ -14,7 +14,6 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from datetime import datetime as dt
 from stats import *
-import pygraphviz as pgv
 import dash_bootstrap_components as dbc
 import math
 ### Import functions for Breadth First Search ###
