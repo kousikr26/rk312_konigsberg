@@ -17,6 +17,8 @@ from stats import *
 import dash_bootstrap_components as dbc
 import dash_daq as daq
 import math
+import matplotlib
+
 
 ########################################################## Import functions for Breadth First Search ##########################
 from addEdge import addEdge,addEdgemap
@@ -54,8 +56,8 @@ date_format='%d-%m-%Y'
 
 
 
-# 4. Miscellaneous variables for Slider Markers
-## 4.1. Loop to generate marks for Time
+# 4. Miscellaneous variables 
+## 4.1. Slider Markers and Loop to generate marks for Time
 time_str = ['0', '0', ':', '0', '0']
 times = {0: {'label': "".join(time_str), "style": {
     "transform": "rotate(-90deg) translateY(-15px)"}}}
@@ -68,11 +70,14 @@ for i in range(0, 48):
             str(int("".join(time_str[0:2])) + 1).zfill(2) + str(':00'))
         times[i+1] = {'label': "".join(time_str),
                       "style": {"transform": "rotate(-90deg) translateY(-15px)"}}
+
 ## 4.2. Generating marks for duration slider
 durations = {}
 for i in range(0, df['Duration'].max(), 5):
     durations[i] = str(i)
 
+## 4.3. Color Map for Edges based on Duration of call (see Section 7.3.)
+cmap = cm.get_cmap('coolwarm')
 
 
 
@@ -232,11 +237,16 @@ def plot_network(df, srs, scs):
         num_to_node[x['Receiver']] = x['Receiver_node']
         edges_x,edges_y=addEdge([x0,y0],[x1,y1],[],[], 0.6, 'end', 20, 30, 15)
         
+        ### 7.3.1. cmap returns the rgba color for the input number in (0.0,1.0)
+        norm_x = x["Duration"]/df["Duration"].max()
+        rgba = cmap(norm_x)
+
+
         edge_trace.append(dict(type='scatter',
                                x=edges_x, y=edges_y,
                                showlegend=False,
                                line=dict(
-                                   width=2, color='rgba(0,0,0,1)'),
+                                   width=3, color='rgba'+str(rgba)),
                                hoverinfo='none',
                                mode='lines',
         ))  # Graph object for each connection
@@ -351,6 +361,11 @@ app.layout = html.Div(children=[
                                                                             date=str(dt(2020, 6, 17, 0, 0, 0)),
                                                                             display_format='DD-MMM-YY'
                                                                         ),
+
+                                                                        html.H5(
+                                                                            'Select Duration :'
+                                                                            ),
+
                                                                         dcc.RangeSlider(
                                                                             id='duration-slider',
                                                                             min=0,
@@ -363,6 +378,15 @@ app.layout = html.Div(children=[
 
                                                                         ),  # Duration Slider
 
+                                                                        dcc.Markdown(
+                                                                            '{} - {}'.format(default_duration_slider_val[0], default_duration_slider_val[1]),
+                                                                            id="duration-value"
+                                                                        ),
+
+                                                                        html.H5(
+                                                                            'Select Time of Day:'
+                                                                            ),
+
                                                                         dcc.RangeSlider(
                                                                             id='time-slider',
                                                                             min=0,
@@ -374,6 +398,11 @@ app.layout = html.Div(children=[
                                                                             pushable=1
 
                                                                         ),  # Time Slider
+
+                                                                        html.H5(
+                                                                            ''
+                                                                        ),# Doesn't let the 'Condition for Caller/Reciever' to fall in time stamps
+
                                                                         html.H5(
                                                                             'Condition for Caller/Reciever'
                                                                         ),
@@ -385,6 +414,10 @@ app.layout = html.Div(children=[
                                                                         ),  # Select if you want the select the numbers to be from Caller/Reciever/Both/Either
                                                                     
                                                                         html.H5(
+                                                                            ''
+                                                                        ),# For visual clarity
+
+                                                                        html.H5(
                                                                             'Select Caller:'
                                                                         ),
                                                                         dcc.Dropdown(
@@ -394,6 +427,11 @@ app.layout = html.Div(children=[
                                                                             value='None',
                                                                             multi=True,
                                                                         ),  # Dropdown for Caller
+
+                                                                        html.H5(
+                                                                            ''
+                                                                        ),# For visual clarity
+
                                                                         html.H5(
                                                                             'Select Reciever:'
                                                                         ),
@@ -405,6 +443,9 @@ app.layout = html.Div(children=[
                                                                             multi=True,
                                                                         ),  # Dropdown for Reciever,
                                                                         
+                                                                        html.H5(
+                                                                            ''
+                                                                        ),# For visual clarity
                                                                         
                                                                         
                                                                         html.Div([
@@ -420,6 +461,10 @@ app.layout = html.Div(children=[
                                                                                     ),
                                                                                     html.Div(id='output-data-upload'),
                                                                                  ]),
+                                                                        html.H5(
+                                                                            ''
+                                                                        ),# For visual clarity
+
                                                                         html.Button('Reset Filters', id='reset-button', n_clicks=0)
                                                                      ],
                                                                      id='filters',lg=3),  # Filters
@@ -439,7 +484,7 @@ app.layout = html.Div(children=[
                                                                         dcc.Graph(
                                                                             id='map-plot'
                                                                         ),
-                                                                        html.H5('The size of the dots denote the total duration of the caller/receiver'),
+                                                                        html.H5('The size of the dots and the width of the edges denote the total duration of the caller/receiver'),
                                                                         dcc.Markdown("""
                                                                         x -> Selected Caller
                                                                                 Diamond Cross -> Selected Receiver
@@ -760,7 +805,16 @@ def update_phone_div_receiver(selected_date1, selected_date2):
 
 
 
-## 9.12. TO RESET ALL FILTERS (except condition, caller and reciever drop-down menus)
+## 9.12. TO UPDATE THE TEXT ON TIME AND DURATION SLIDERS
+@app.callback(
+    Output('duration-value', 'children'),
+    [Input('duration-slider', 'value')]
+    )
+def update__selected_duration_text(value):
+    return  '{} - {}'.format(value[0], value[1])
+
+
+## 9.13. TO RESET ALL FILTERS (except condition, caller and reciever drop-down menus)
 @app.callback(
     [Output('date-picker1', 'date'), Output('date-picker2', 'date'), Output('duration-slider', 'value'), Output('time-slider', 'value'), Output('select-caller-receiver', 'value')],
     [Input('reset-button', 'n_clicks')]
