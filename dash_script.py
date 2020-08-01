@@ -148,7 +148,7 @@ def plot_network(df, srs, scs):
         G.add_edge(x["Caller_node"], x["Receiver_node"])
 
     df.apply(make_graph, axis=1)  # Make a graph
-    pos = nx.nx_agraph.graphviz_layout(G)  # Position of Points
+    pos = nx.nx_agraph.pygraphviz_layout(G)  # Position of Points
 
     # Add Edges to Plot
     edge_trace = []
@@ -668,4 +668,4 @@ def ResetFilters(button_reset):
 #### Run Server ####
 server=app.server
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, host='0.0.0.0')

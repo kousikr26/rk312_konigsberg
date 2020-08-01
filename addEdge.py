@@ -82,3 +82,68 @@ def addEdge(start, end, edge_x, edge_y, lengthFrac=1, arrowPos = None, arrowLeng
         edge_y.append(pointy - signx**2 * signy * dy)
     
     return edge_x, edge_y
+def addEdgemap(start, end, edge_x, edge_y, lengthFrac=1, arrowPos = None, arrowLength=0.025, arrowAngle = 30, dotSize=20):
+    
+    # Get start and end cartesian coordinates
+    x0, y0 = start
+    x1, y1 = end
+    
+    # Incorporate the fraction of this segment covered by a dot into total reduction
+    length = math.sqrt( (x1-x0)**2 + (y1-y0)**2 )
+    dotSizeConversion = .0565/20 # length units per dot size
+    convertedDotDiameter = dotSize * dotSizeConversion
+    lengthFracReduction = convertedDotDiameter / length
+    lengthFrac = lengthFrac - lengthFracReduction
+
+    # Append line corresponding to the edge
+    edge_x.append(x0)
+    edge_x.append(x1)
+    edge_x.append(None) # Prevents a line being drawn from end of this edge to start of next edge
+    edge_y.append(y0)
+    edge_y.append(y1)
+    edge_y.append(None)
+    
+    
+    if not arrowPos == None:
+        
+        # Find the point of the arrow; assume is at end unless told middle
+        pointx = x1
+        pointy = y1
+        eta = math.degrees(math.atan((x1-x0)/(y1-y0)))
+        
+        if arrowPos == 'middle' or arrowPos == 'mid':
+            pointx = x0 + (x1-x0)/2
+            pointy = y0 + (y1-y0)/2
+            
+        # Find the directions the arrows are pointing
+        signx = (x1-x0)/abs(x1-x0)
+        signy = (y1-y0)/abs(y1-y0)
+        
+        # Append first arrowhead
+        dx = arrowLength * math.sin(math.radians(eta + arrowAngle))
+        dy = arrowLength * math.cos(math.radians(eta + arrowAngle))    
+        edge_x.append(pointx)
+        edge_x.append(pointx - signx**2 * signy * dx)
+        edge_x.append(None)
+        edge_y.append(pointy)
+        edge_y.append(pointy - signx**2 * signy * dy)
+        edge_y.append(None)
+        
+#         # And second arrowhead
+        dx2 = arrowLength * math.sin(math.radians(eta - arrowAngle))
+        dy2 = arrowLength * math.cos(math.radians(eta - arrowAngle))    
+        edge_x.append(pointx)
+        edge_x.append(pointx - signx**2 * signy * dx2)
+#         edge_x.append(None)
+        edge_y.append(pointy)
+        edge_y.append(pointy - signx**2 * signy * dy2)
+#         edge_y.append(None)
+        
+        edge_x.append(pointx - signx**2 * signy * dx)
+        edge_y.append(pointy - signx**2 * signy * dy)
+        edge_x.append(None)
+        edge_y.append(None)
+        
+
+    
+    return edge_x, edge_y
