@@ -422,11 +422,12 @@ app.layout = html.Div(children=[
 
 
                                                     dbc.Col(children=[
+                                                                        html.Div(children=[
                                                                         html.H3('Zoomed out'),
                                                                        daq.ToggleSwitch(id='zoom',value=False, size=40),
-                                                                        html.H3('Zoomed out'),
-                                                                        html.Div(children=[
+                                                                        html.H3('Zoomed out')],id='plot-header1'),
 
+                                                                        html.Div(children=[
                                                                         html.H3('Network Plot '),
                                                                        daq.ToggleSwitch(id='toggle-network-map',value=False, size=40),
                                                                        html.H3('Map Plot')],id='plot-header'),
