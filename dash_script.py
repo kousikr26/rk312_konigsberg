@@ -172,23 +172,45 @@ def plot_map(df):
 
 #Plot trace
 def plot_movement(df,selected_numbers):
+    print('Hello')
     data=[]
     colors=['#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A', '#19D3F3', '#FF6692', '#B6E880', '#FF97FF', '#FECB52']
     color_no=0
     df=pd.merge(df,towers[['lat','lon','TowerID']],on='TowerID')
     for number in selected_numbers:
         
+        df['Date']=pd.to_datetime(df['Date'],format='%d-%m-%Y')
+        #df=df[df['Date'].isin(pd.date_range('2020/06/05','2020/06/06'))].sort_values(['Date','Time']).reset_index()
+
         
-        filtered_df=df[df['Caller']==number].sort_values(['Date','Time'])
+        filtered_df=df[df['Caller']==number].sort_values(['Date','Time']).reset_index()
         all_lat=[]
         all_lon=[]
         locs=[]
+        duration_hover=[]
+        duration_output=[]
 
+        l1 = filtered_df['Date'].dt.date.apply(str) + ' '+ filtered_df['Time'].apply(str)
+        for i in range(len(l1)):
+            l1[i] =pd.to_datetime(l1[i],format='%Y-%m-%d %H:%M:%S')
+
+        for i in range(len(l1)-1):
+            x=l1[i+1]-l1[i]
+            duration_hover.append(x)
+
+        
+        dura_op=[]  # Will hold str(transitduration) to be hovered per edge
+        for i in range(len(duration_output)):
+            dura_op.append(str(duration_output[i]))
+        
+            
         for (index,row) in filtered_df.iterrows():
             locs.append([row['lat'],row['lon']])
+
         for i in range(len(locs)-1):
-            all_lat,all_lon=addEdgemap(locs[i],locs[i+1],all_lat,all_lon, 1, "middle",0.0045, 30, 10)
-            data.append(go.Scattermapbox(lat=all_lat,lon=all_lon,hovertext=str(number),mode = "lines",marker=go.scattermapbox.Marker(
+            all_lat,all_lon,duration_output=addEdgemap(locs[i],locs[i+1],duration_hover[i],all_lat,all_lon,duration_output, 0.7, "end",0.009, 30, 10) 
+            print(duration_output)
+            data.append(go.Scattermapbox(lat=all_lat,lon=all_lon,mode = "lines",hovertext=duration_output,marker=go.scattermapbox.Marker(
                     size=17,
                     color=colors[color_no],
                     opacity=1
@@ -198,7 +220,7 @@ def plot_movement(df,selected_numbers):
         color_no%=len(colors)
     fig=go.Figure(data,layout={
         'mapbox_style':'open-street-map',
-    
+        
         'mapbox':dict(
         
             bearing=0,
@@ -745,6 +767,7 @@ def display_selected_data(selectedData, filtered_data):
             for number in component:
                 s += "\t" + str(number) + "\n"
         return s,plot_movement(df,l)
+
     return json.dumps(selectedData, indent=2),go.Figure()
 
 
