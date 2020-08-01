@@ -44,7 +44,7 @@ def addEdge(start, end, edge_x, edge_y, lengthFrac=1, arrowPos = None, arrowLeng
     edge_y.append(None)
     
     # Draw arrow
-    if not arrowPos == None:
+    if (not arrowPos == None) and (x0!=x1) and (y1!=y0):
         
         # Find the point of the arrow; assume is at end unless told middle
         pointx = x1

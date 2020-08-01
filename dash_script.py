@@ -11,11 +11,12 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_daq as daq
 from dash.dependencies import Input, Output, State
 from datetime import datetime as dt
 from stats import *
+import pygraphviz as pgv
 import dash_bootstrap_components as dbc
-import dash_daq as daq
 import math
 import matplotlib
 
@@ -30,17 +31,11 @@ from BFSN import bfs
 external_stylesheets = [dbc.themes.SANDSTONE]
 
 
-
-
-# 1. Load  Data
-df = pd.read_csv('./data/data.csv') #CDR Data
-df2 = pd.read_csv('./data/ipdr_data.csv') #IPDR Data
+# Load  Data
+df = pd.read_csv('./data/final_data.csv')
+#df2 = pd.read_csv('./data/ipdr_data.csv')
 towers=pd.read_csv('./data/towers_min.csv') #Data for Cell Towers
-
-
-
-
-# 2. Initializing App 
+#### Create App ###
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = 'CDR/IPDR Analyser'
 
@@ -73,7 +68,7 @@ for i in range(0, 48):
 
 ## 4.2. Generating marks for duration slider
 durations = {}
-for i in range(0, df['Duration'].max(), 5):
+for i in range(0, int(df['Duration'].max()), 5):
     durations[i] = str(i)
 
 ## 4.3. Color Map for Edges based on Duration of call (see Section 7.3.)
@@ -88,12 +83,11 @@ num_to_node = {}  #Dictionary that stores numbers to node
 data_columns = ["Caller", "Receiver", "Date",
                 "Time", "Duration", "TowerID", "IMEI"]
 
+data_columns_ipdr = ["Caller","App_name","Private IP","Private Port", "Public IP", "Public Port", "Dest IP","DEST PORT", "MSISDN", "IMSI", "Date","Time",\
+    "Duration", "TowerID", "Uplink Volume","Downlink Volume","Total Volume","I_RATTYPE"]
 
-data_columns_ipdr = ["IMEI","Private IP","Private Port", "Public IP", "Public Port", "Dest IP","DEST PORT", "MSISDN", "IMSI", "Start Date","Start Time",\
-    "End Date","End Time", "CELL_ID", "Uplink Volume","Downlink Volume","Total Volume","I_RATTYPE"]
 
-
-ports_to_apps = {'DEST PORT':'App','5223':'WhatsApp','5228':'WhatsApp', '4244':'WhatsApp', '5222':'WhatsApp', '5242':'WhatsApp','443':'Skype',\
+ports_to_apps = {'DEST PORT':'App','0':'nan','5223':'WhatsApp','5228':'WhatsApp', '4244':'WhatsApp', '5222':'WhatsApp', '5242':'WhatsApp','443_':'Skype','443':'SSL',\
     '3478-3481':'Skype','49152-65535':'Skype','80':'Web connection','8080':'Web Connection', \
         '8081': 'Web Connection', '993':'IMAP', '143':'IMAP', '8024':'iTunes', '8027':'iTunes', '8013':'iTunes', \
             '8017':'iTunes', '8003':'iTunes', '7275':'iTunes', '8025':'iTunes', '8009':'iTunes',\
@@ -109,29 +103,38 @@ ports_to_apps = {'DEST PORT':'App','5223':'WhatsApp','5228':'WhatsApp', '4244':'
 
 # 6. Function to set color scale of edges
 viridis = cm.get_cmap('viridis', 12)
-def preprocess_data(df,df2):
+
+def preprocess_data(df):
     # nodes
-    nodes = np.union1d(df['Caller'].unique(), df['Receiver'].unique())
+    l=df['Receiver'].unique()
+    l=l[l!=20000] # to remove occurrences of 20000
+    nodes = np.union1d(df['Caller'].unique(),l )
     # Define Color
     df['Dura_color'] = (df['Duration']/df['Duration'].max()).apply(viridis)
-    df['Date'] = df['Date'].apply(lambda x:pd.to_datetime(x,format=date_format)).dt.date
+    
+    df['Date'] = df['Date'].apply(lambda x: pd.to_datetime(x,format=date_format)).dt.date
+
 
     df['Caller_node'] = df['Caller'].apply(
         lambda x: list(nodes).index(x))  # Caller Nodes
     
-    df['Receiver_node'] = df['Receiver'].apply(lambda x: list(nodes).index(x))
+#    df['Receiver_node'] = df['Receiver'].apply(lambda x: list(nodes).index(x))
+    df['Receiver_node'] = df['Receiver'].apply(lambda x: list(nodes).index(x) if x!=20000 else -1)
 
-    df2['IMEI_node'] = df2['IMEI'].apply(lambda x: list(nodes).index(x))
-    df2['App_name'] = df2['DEST PORT'].apply(lambda x:ports_to_apps[str(x)])
+    df['IMEI_node'] = df['Caller'].apply(lambda x: list(nodes).index(x) if x!=20000 else -1)
+    df['App_name'] = df['DEST PORT'].apply(lambda x:ports_to_apps[str(x)] if (ports_to_apps[str(x)]!='nan') else None)
 
     coords_to_node.clear()
     num_to_node.clear()
     node_to_num.clear()
-preprocess_data(df,df2) # Setting the scales
 
 
 
+preprocess_data(df)
 
+
+#### Plots ####
+# Plot Graph of calls
 
 # 7. Main Plot Functions 
 fig = go.Figure() # Defining the main figure
@@ -210,16 +213,9 @@ def plot_network(df, srs, scs):
     G = nx.DiGraph()  # networkX Graph
 
     # Reciever Nodes
-    selected_callers = []
-    selected_receivers = []
-    if srs != 'None':
-        for p in srs:
-            selected_receivers.append(int(p))
-    if scs != 'None':
-        for p in scs:
-            selected_callers.append(int(p))
+    df=df[df['Receiver_node']!=-1]
     def make_graph(x):
-        G.add_edge(x["Caller_node"], x["Receiver_node"])
+            G.add_edge(x["Caller_node"], x["Receiver_node"])
 
     df.apply(make_graph, axis=1)  # Make a graph
     pos = nx.nx_agraph.pygraphviz_layout(G)  # Position of Points
@@ -261,20 +257,13 @@ def plot_network(df, srs, scs):
     node_y = []
     total_duration = []
     hover_list = []
-    symbols = []
     for node in pos:
         x, y = pos[node]
         coords_to_node[(x, y)] = node
         hover_list.append(str(node_to_num[node]))
         node_x.append(x)
         node_y.append(y)
-        if node_to_num[node] in selected_callers:
-            symbols.append('x')
-        elif node_to_num[node] in selected_receivers:
-            symbols.append('diamond-cross')
-        else:
-            symbols.append('circle')
-        total_duration.append(15*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
+        total_duration.append(27*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
     node_trace = go.Scatter(
         x=node_x, y=node_y,
         mode='markers',
@@ -283,17 +272,19 @@ def plot_network(df, srs, scs):
         showlegend=False,
         marker=dict(
             size=total_duration,
-            showscale=False,
-            symbol=symbols,
+            showscale=True,
             line_width=2,
             line_color='black'))  # Nodes visual design info.
 
 ## 7.5. The main figure for both the edges and nodes data.
     fig = go.Figure(data=edge_trace+[node_trace],
                     layout=go.Layout(
+                   
                     titlefont_size=16,
+                 
+
                     hovermode='closest',
-                    margin=dict(b=0, l=0, r=0, t=0),
+                    margin=dict(b=20, l=5, r=5, t=40),
                     annotations=[dict(
                         showarrow=True,
                         xref="paper", yref="paper",
@@ -481,15 +472,16 @@ app.layout = html.Div(children=[
 
                                                                         ),
                                                                         dcc.Graph(id='movement-plot'),
-                                                                        dcc.Graph(
-                                                                            id='map-plot'
-                                                                        ),
+                                                                        
                                                                         html.H5('The size of the dots and the width of the edges denote the total duration of the caller/receiver'),
                                                                         dcc.Markdown("""
                                                                         x -> Selected Caller
                                                                                 Diamond Cross -> Selected Receiver
                                                                                 o -> Other
                                                                                 """),
+                                                                        dcc.Graph(
+                                                                            id='map-plot'
+                                                                        ),
                                                                         dcc.Graph(id='duration-plot'),
                                                                      ],id='plot-area',lg=6),     # Network Plot
 
@@ -505,17 +497,26 @@ app.layout = html.Div(children=[
                                                                                     html.Pre(id='hover-data',)
                                                                                 ]),  # Hover Data Container
 
-                                                                        html.Div([
+                                                                      html.Div([
                                                                             
-                                                                                    dcc.Markdown("""
-                                                                                                    **Click to get CDR for a number** \n
-                                                                                                    Click on points in the graph to get the call data records.
-                                                                                """),
-                                                                                    html.Pre(id='click-data', ),
-                                                                                    dcc.Graph(
-                                                                                        id='pie-chart'
-                                                                                    )
-                                                                                ]),  # Click Data Container
+                                                                            dcc.Markdown("""
+                                                                            **Click to get CDR and IPDR for a number** \n
+                                                                            Click on points in the graph to get the call data records.\n\n
+                                                                            Selected number:
+                                                                        """),
+                                                                            html.Div(
+                                                                                id="display-selected-num"
+                                                                            ),
+
+                                                                            html.Pre(id='click-data', ),
+                                                                            dcc.Graph(
+                                                                                id='pie-chart'
+                                                                            ),
+                                                                            
+                                                                            html.Pre(id='click-data-ipdr', )
+
+                                                                        ], ),  # Click Data Container
+                                                      
 
                                                                         html.Div([
                                                                                     dcc.Markdown("""
@@ -642,37 +643,32 @@ def display_hover_data(hoverData, filtered_data):
 
 ## 9.3. TO UPDATE THE DURATION PLOT AND IPDR USAGE PIE-CHART FOR A NODE.
 @app.callback(
-    [Output('click-data', 'children'), Output('pie-chart','figure'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
-    [Input('network-plot', 'clickData')])
-def display_click_data(clickData):
-    emptyPlot= go.Figure()
-    emptyPlot.update_layout(
-    showlegend=False,
-    annotations=[
-        dict(
-            x=3,
-            y=1.5,
-            xref="x",
-            yref="y",
-            text="Click a point to get started",
-            showarrow=False
-            
-        )
-    ]
-)
+    [Output('display-selected-num','children'),Output('click-data', 'children'), Output('pie-chart','figure'),Output('click-data-ipdr', 'children'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
+    [Input('network-plot', 'clickData'),Input(component_id='filtered-data', component_property='children')])
+def display_click_data(clickData,filtered_data):
+    df = pd.read_json(filtered_data, orient='split')
     if clickData is not None and 'marker.size' in clickData['points'][0]:
         nodeNumber = coords_to_node[(
             clickData['points'][0]['x'], clickData['points'][0]['y'])]
-        groups=df2[df2['IMEI_node']==nodeNumber].groupby('App_name')['IMEI'].count()
+        groups=df[df['IMEI_node']==nodeNumber].groupby('App_name')['Caller'].count()
+    
         fig = go.Figure(data=dict(type='pie',values=groups,labels=groups.index))
         fig.update_layout(showlegend=False)
+  
         # Filtering DF
-        new_df = df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns]
+        new_df = df[((df['Receiver_node'] !=-1)&(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber))][data_columns]
+        
+        x=df[(df['Caller_node'] == nodeNumber)]['Caller'].unique()[0]
+        new_df_ipdr = df[(df['Caller_node'] == nodeNumber)][data_columns_ipdr]
 
-        return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns].to_string(index=False), fig, plot_Duration(new_df)
-    return "Click on a node to view more data",emptyPlot,emptyPlot #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+        new_df_ipdr=new_df_ipdr[new_df_ipdr['App_name'].notna()]
 
-### 9.3.1 Function to return the Duration vs Time figure
+        return str(x),new_df.to_string(index=False), fig,new_df_ipdr.to_string(index=False), plot_Duration(new_df)
+    return 'None',"Click on a node to view more data",go.Figure(),"Click on a node to view more data", go.Figure() #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+
+
+
+#Callback to output the new figure for Duration plot of selected node.
 def plot_Duration(new_df):
 
     if new_df is not None:
@@ -697,10 +693,7 @@ def display_selected_data(selectedData, filtered_data):
     df = pd.read_json(filtered_data, orient='split')
     # TODO #3 Graph should also be filtered and only nodes in component should be displayed
     if selectedData is not None:
-       
-        global l
-        components=[]
-        l.clear()
+        l = []
         for point in selectedData['points']:
             l.append(node_to_num[coords_to_node[point['x'], point['y']]])
         components = bfs(l, df)
@@ -778,10 +771,10 @@ def update_map_plot_callback(filtered_data):
     [Input(component_id='toggle-network-map',component_property='value')]
 )
 def toggle_network_map(toggle):
-    if toggle==False:
-        return {'display':'block'}, {'display':'none'}
+    if toggle:
+        return {'display':'none'},{'display': 'block'}
     else:
-        return  {'display':'none'},{'display':'block'}
+        return {'display': 'block'},{'display':'none'}
 
 
 
@@ -800,7 +793,7 @@ def update_phone_div_caller(selected_date1, selected_date2):
     Output(component_id='receiver-dropdown', component_property='options'),
     [Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date')]
 )
-def update_phone_div_receiver(selected_date1, selected_date2):
+def update_phone_div_receiver1(selected_date1, selected_date2):
     return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))]['Receiver'].unique()]
 
 
@@ -828,4 +821,4 @@ def ResetFilters(button_reset):
 ########################################################## Run Server ##########################################################
 server=app.server
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, host='0.0.0.0')
