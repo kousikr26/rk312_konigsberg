@@ -1,0 +1,6 @@
+data/404.csv
+data/405.csv
+.ipynb_checkpoints
+__pycache__
+.vscode/
+*.pyc
