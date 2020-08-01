@@ -19,7 +19,7 @@ import pygraphviz as pgv
 import dash_bootstrap_components as dbc
 import math
 import matplotlib
-
+import requests
 
 ########################################################## Import functions for Breadth First Search ##########################
 from addEdge import addEdge,addEdgemap
@@ -611,13 +611,12 @@ def update_filtered_div_caller(contents, selected_date1, selected_date2, selecte
 ## 9.2. TO UPDATE THE HOVER DATA OF THE SELECTED NODE.
 @app.callback(
     Output('hover-data', 'children'),
-    [Input('network-plot', 'hoverData'), Input(component_id='filtered-data', component_property='children')])
-def display_hover_data(hoverData, filtered_data):
+    [Input('network-plot', 'hoverData'), Input(component_id='filtered-data', component_property='children'),Input(component_id='map-plot',component_property='hoverData')])
+def display_hover_data(hoverData, filtered_data,hoverDataMap):
 
     df = pd.read_json(filtered_data, orient='split')
     if hoverData is not None and 'marker.size' in hoverData['points'][0]:
         # Get node number corresponding to the point.
-
         nodeNumber = coords_to_node[(
             hoverData['points'][0]['x'], hoverData['points'][0]['y'])]
         hd = 'Selected Number: ' + \
@@ -636,7 +635,19 @@ def display_hover_data(hoverData, filtered_data):
         hd += "Most Calls to: " + str(z[0]) + "\n"
         hd += "Most Calls from: " + str(z[1]) + "\n"
         hd += "Most Calls: " + str(z[2]) + "\n"
+        print(hoverDataMap)
         return hd
+        
+    if hoverDataMap is not None:
+    
+        cur_lat,cur_lon=hoverDataMap['points'][0]['lat'],hoverDataMap['points'][0]['lon']
+        print(cur_lat,cur_lon)
+        req_json = requests.get('https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&zoom=18&addressdetails=1'.format(
+                lat=cur_lat, lon=cur_lon)).json()
+        add_string = ""
+        add_string +=" ,".join(req_json['address'].values())
+        print(add_string)
+        return add_string
     return "Hover data..."
 
 
@@ -814,7 +825,6 @@ def update__selected_duration_text(value):
     )
 def ResetFilters(button_reset):
     return str(dt(2020, 6, 17, 0, 0, 0)), str(dt(2020, 6, 17, 0, 0, 0)), default_duration_slider_val, default_time_slider_val, default_caller_receiver_val
-
 
 
 
