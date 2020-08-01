@@ -19,7 +19,7 @@ import dash_daq as daq
 import math
 ### Import functions for Breadth First Search ###
 from addEdge import addEdge
-
+from urllib import request
 from BFSN import bfs
 
 ##### Stylesheet #####
@@ -115,6 +115,8 @@ pos = {}
 def plot_map(df):
     df=pd.merge(df,towers[['lat','lon','TowerID']],on='TowerID')
     people=dict(type='scattermapbox',lat=df['lat'],lon=df['lon'],mode='markers')
+
+
     fig=go.Figure(people,layout={
         'mapbox_style':'open-street-map',
         'margin': dict(l = 0, r = 0, t = 0, b = 0),
@@ -127,9 +129,9 @@ def plot_map(df):
             ),
             pitch=0,
             zoom=10
-        )
+        )}
         
-    })
+    )
 
     return fig
 # Plot Graph of calls
@@ -508,34 +510,53 @@ def display_hover_data(hoverData, filtered_data):
 
 @app.callback(
     [Output('click-data', 'children'), Output('pie-chart','figure'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
-    [Input('network-plot', 'clickData')])
-def display_click_data(clickData):
-    emptyPlot= go.Figure()
-    emptyPlot.update_layout(
-    showlegend=False,
-    annotations=[
-        dict(
-            x=3,
-            y=1.5,
-            xref="x",
-            yref="y",
-            text="Click a point to get started",
-            showarrow=False
-            
-        )
-    ]
-)
-    if clickData is not None and 'marker.size' in clickData['points'][0]:
-        nodeNumber = coords_to_node[(
-            clickData['points'][0]['x'], clickData['points'][0]['y'])]
-        groups=df2[df2['IMEI_node']==nodeNumber].groupby('App_name')['IMEI'].count()
-        fig = go.Figure(data=dict(type='pie',values=groups,labels=groups.index))
-        fig.update_layout(showlegend=False)
-        # Filtering DF
-        new_df = df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns]
+    [Input('network-plot', 'clickData'), Input('map-plot','clickData'), Input('toggle-network-map', 'value')])
+def display_click_data(clickData, clickData2, mode):
+    if mode == False:
+        emptyPlot= go.Figure()
+        emptyPlot.update_layout(
+        showlegend=False,
+        annotations=[
+            dict(
+                x=3,
+                y=1.5,
+                xref="x",
+                yref="y",
+                text="Click a point to get started",
+                showarrow=False
 
-        return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns].to_string(index=False), fig, plot_Duration(new_df)
-    return "Click on a node to view more data",emptyPlot,emptyPlot #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+            )
+        ]
+    )
+        if clickData is not None and 'marker.size' in clickData['points'][0]:
+            nodeNumber = coords_to_node[(
+                clickData['points'][0]['x'], clickData['points'][0]['y'])]
+            groups=df2[df2['IMEI_node']==nodeNumber].groupby('App_name')['IMEI'].count()
+            fig = go.Figure(data=dict(type='pie',values=groups,labels=groups.index))
+            fig.update_layout(showlegend=False)
+            # Filtering DF
+            new_df = df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns]
+
+            return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns].to_string(index=False), fig, plot_Duration(new_df)
+        return "Click on a node to view more data",emptyPlot,emptyPlot #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+    else:
+        print(clickData2)
+
+        dic_val = clickData2.values()
+        cur_lat = float(clickData2['points'][0]['lat'])
+        cur_lon = float(clickData2['points'][0]['lon'])
+        resp = request.urlopen(
+            'https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&zoom=18&addressdetails=1'.format(
+                lat=cur_lat, lon=cur_lon))
+        req_json = json.loads((resp.peek().decode('utf-8')))
+        add_string = ""
+        add_string += req_json['address']['road'] + '\n'
+        add_string += req_json['address']['town'] + '\n'
+        add_string += req_json['address']['city'] + '\n'
+        add_string += req_json['address']['state_district'] + '\n'
+        print(add_string)
+        print(req_json.peek())
+        return add_string, go.Figure(), go.Figure()
 #Callback to output the new figure for Duration plot of selected node.
 def plot_Duration(new_df):
 
