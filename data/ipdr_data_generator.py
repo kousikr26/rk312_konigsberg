@@ -12,6 +12,9 @@ start_date = "1-6-2020"
 start_time = "1:30:45"
 end_date = "20-6-2020"
 end_time = "21:30:55"
+end_date2 = "1-6-2020"
+end_time2 = "13:30:55"
+
 towerIDS = list(range(100, 999))
 
 
@@ -20,6 +23,7 @@ towerIDS = list(range(100, 999))
 start = start_date+" "+start_time
 end = end_date+" "+end_time
 
+end2 = end_date2+" "+end_time2
 
 def private_ip():
     x1 = random.choice([172, 192, 10])
@@ -77,7 +81,7 @@ def rat_type():
     allowed_values = ['2G','3G']
     return random.choice(allowed_values)
 
-fields=["IMEI","Private IP","Private Port", "Public IP", "Public Port", "Dest IP","DEST PORT", "MSISDN", "IMSI", "Start Date","Start Time","End Date","End Time", "CELL_ID", "Uplink Volume","Downlink Volume","Total Volume","I_RATTYPE"]
+fields=["IMEI","Private IP","Private Port", "Public IP", "Public Port", "Dest IP","DEST PORT", "MSISDN", "IMSI", "Start Date","Start Time","Duration", "CELL_ID", "Uplink Volume","Downlink Volume","Total Volume","I_RATTYPE"]
 
 ph_numbers = np.union1d(pd.read_csv('data/data.csv')['Caller'].unique(),pd.read_csv('data/data.csv')['Receiver'].unique())
 
@@ -103,16 +107,13 @@ print(len(nums))
 print(len(calls))
 for i in range(len(calls)):
     t1=random_date(start,end,random.random())
-    
     #print(time.strftime('%Y-%m-%dT%H:%M:%SZ', t1))
-    t2=random_date(time.strftime('%d-%m-%Y %H:%M:%S', t1),end,random.random())
+    #t2=random_date(start,end2,random.random())
     calls[i].append(get_msisdn())
     calls[i].append(imei())
     calls[i].append(getDate(t1)) # start date
     calls[i].append(getTime(t1)) # start time
-    calls[i].append(getDate(t2))  #end date, to be improved
-    calls[i].append(getTime(t2))  # end time, to be improve
-
+    calls[i].append(random.randint(1,70))  # Duration
     calls[i].append(random.choice(towerIDS))
 
     v1 = volume()

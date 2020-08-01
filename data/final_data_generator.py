@@ -6,7 +6,6 @@ df1 = pd.read_csv('data/data.csv')
 df2 = pd.read_csv('data/ipdr_data.csv')
 
 df2['Start Date'] = df2['Start Date'].apply(pd.to_datetime).dt.date
-df2['End Date'] = df2['End Date'].apply(pd.to_datetime).dt.date
 
 df2.rename(index=str, columns={'IMEI': 'Caller','Start Date':'Date','Start Time':'Time','CELL_ID':'TowerID'}, inplace=True)
 df2['Receiver']=20000
