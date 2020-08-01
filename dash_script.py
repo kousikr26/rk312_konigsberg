@@ -35,6 +35,8 @@ external_stylesheets = [dbc.themes.SANDSTONE]
 df = pd.read_csv('./data/final_data.csv')
 #df2 = pd.read_csv('./data/ipdr_data.csv')
 towers=pd.read_csv('./data/towers_min.csv') #Data for Cell Towers
+tower_mean=df.groupby(['TowerID'])['Duration'].mean()
+tower_std=df.groupby(['TowerID'])['Duration'].std()
 #### Create App ###
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = 'CDR/IPDR Analyser'
@@ -142,10 +144,13 @@ pos = {}
 
 ## 7.1. Returns the figure for geographical map from input Dataframe.
 def plot_map(df):
+
     df=pd.merge(df,towers[['lat','lon','TowerID']],on='TowerID')
-    people=dict(type='scattermapbox',lat=df['lat'],lon=df['lon'],mode='markers')
-
-
+    towers_deviation=df.groupby(['TowerID'])[['Duration']].apply(lambda x : (x.mean()-tower_mean[x.name])/tower_std[x.name] ).reset_index()
+    towers_deviation['Duration']=towers_deviation['Duration'].apply(lambda x : max(x,0))
+    node_x=towers_deviation['TowerID'].apply(lambda x : towers[towers['TowerID']==x]['lat'].unique()[0])
+    node_y=towers_deviation['TowerID'].apply(lambda x : towers[towers['TowerID']==x]['lon'].unique()[0])
+    people=dict(type='scattermapbox',lat=node_x,lon=node_y,mode='markers',marker=go.scattermapbox.Marker( size=30*pow(0.3,towers_deviation['Duration'])))
     fig=go.Figure(people,layout={
         'mapbox_style':'open-street-map',
         'margin': dict(l = 0, r = 0, t = 0, b = 0),
