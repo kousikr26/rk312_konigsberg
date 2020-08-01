@@ -378,17 +378,19 @@ app.layout = html.Div(children=[
             html.Div([
                 
                 dcc.Markdown("""
-                **Click to get CDR for a number** \n
-                Click on points in the graph to get the call data records.
+                **Click to get CDR and IPDR for a number** \n
+                Click on points in the graph to get the call data records.\n\n
+                Selected number:
             """),
+                html.Div(
+                    id="display-selected-num"
+                ),
+
                 html.Pre(id='click-data', ),
                 dcc.Graph(
                     id='pie-chart'
                 ),
-                dcc.Markdown("""
-                **Click to get IPDR for a number** \n
-                Click on points in the graph to get the IPDR for the number.
-            """),
+                
                 html.Pre(id='click-data-ipdr', )
 
             ], ),  # Click Data Container
@@ -505,7 +507,7 @@ def display_hover_data(hoverData, filtered_data):
 
 
 @app.callback(
-    [Output('click-data', 'children'), Output('pie-chart','figure'),Output('click-data-ipdr', 'children'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
+    [Output('display-selected-num','children'),Output('click-data', 'children'), Output('pie-chart','figure'),Output('click-data-ipdr', 'children'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
     [Input('network-plot', 'clickData'),Input(component_id='filtered-data', component_property='children')])
 def display_click_data(clickData,filtered_data):
     df = pd.read_json(filtered_data, orient='split')
@@ -519,13 +521,14 @@ def display_click_data(clickData,filtered_data):
         #print(fig)
         # Filtering DF
         new_df = df[((df['Receiver_node'] !=-1)&(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber))][data_columns]
-
+        
+        x=df[(df['Caller_node'] == nodeNumber)]['Caller'].unique()[0]
         new_df_ipdr = df[(df['Caller_node'] == nodeNumber)][data_columns_ipdr]
         print(new_df_ipdr['App_name'].unique())
         new_df_ipdr=new_df_ipdr[new_df_ipdr['App_name'].notna()]
 
-        return new_df.to_string(index=False), fig,new_df_ipdr.to_string(index=False), plot_Duration(new_df)
-    return "Click on a node to view more data",go.Figure(),"Click on a node to view more data", go.Figure() #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+        return str(x),new_df.to_string(index=False), fig,new_df_ipdr.to_string(index=False), plot_Duration(new_df)
+    return 'None',"Click on a node to view more data",go.Figure(),"Click on a node to view more data", go.Figure() #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
 
 
 
