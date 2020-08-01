@@ -1,4 +1,4 @@
-#### Import Libraries #########
+########################################################### Import Libraries ###################################################
 import pandas as pd
 import base64
 import io
@@ -17,29 +17,45 @@ from stats import *
 import dash_bootstrap_components as dbc
 import dash_daq as daq
 import math
-### Import functions for Breadth First Search ###
+
+########################################################## Import functions for Breadth First Search ##########################
 from addEdge import addEdge
-from urllib import request
 from BFSN import bfs
 
-##### Stylesheet #####
+
+
+########################################################## Stylesheet ##########################################################
 external_stylesheets = [dbc.themes.SANDSTONE]
 
 
-# Load  Data
-df = pd.read_csv('./data/data.csv')
-df2 = pd.read_csv('./data/ipdr_data.csv')
-#### Create App ###
+
+
+# 1. Load  Data
+df = pd.read_csv('./data/data.csv') #CDR Data
+df2 = pd.read_csv('./data/ipdr_data.csv') #IPDR Data
+towers=pd.read_csv('./data/towers_min.csv') #Data for Cell Towers
+
+
+
+
+# 2. Initializing App 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = 'CDR/IPDR Analyser'
-#### Default Variables ####
+
+
+
+
+# 3. Setting Default Variables for various Filters ####
 default_duration_slider_val = [0, 100]
 default_time_slider_val = [0,48]
 default_caller_receiver_val = 3
 date_format='%d-%m-%Y'
-## Load towers
-towers=pd.read_csv('./data/towers_min.csv')
-# Loop to generate marks for Time
+
+
+
+
+# 4. Miscellaneous variables for Slider Markers
+## 4.1. Loop to generate marks for Time
 time_str = ['0', '0', ':', '0', '0']
 times = {0: {'label': "".join(time_str), "style": {
     "transform": "rotate(-90deg) translateY(-15px)"}}}
@@ -52,14 +68,16 @@ for i in range(0, 48):
             str(int("".join(time_str[0:2])) + 1).zfill(2) + str(':00'))
         times[i+1] = {'label': "".join(time_str),
                       "style": {"transform": "rotate(-90deg) translateY(-15px)"}}
-# Generating marks for duration slider
+## 4.2. Generating marks for duration slider
 durations = {}
 for i in range(0, df['Duration'].max(), 5):
     durations[i] = str(i)
 
 
-coords_to_node = {}  # Dictionary that stores coordinates to node number
 
+
+# 5. Variables for Graph Functions
+coords_to_node = {}  # Dictionary that stores coordinates to node number
 node_to_num = {}  # Dictionary that stores node number to phone number
 num_to_node = {}  #Dictionary that stores numbers to node
 data_columns = ["Caller", "Receiver", "Date",
@@ -79,10 +97,12 @@ ports_to_apps = {'DEST PORT':'App','5223':'WhatsApp','5228':'WhatsApp', '4244':'
                     '40019':'Microsoft Online Games', '40001':'Microsoft Online Games', '40004':'Microsoft Online Games', \
                         '40034':'Microsoft Online Games', '40031':'Microsoft Online Games', '40029':'Microsoft Online Games',\
                               '40005':'Microsoft Online Games', '40026': 'Microsoft Online Games', '40008': 'Microsoft Online Games',\
-                                  '40032':'Microsoft Online Games'}   # did not take '443':'SSL, Web connection' to avoid double 443
+                                  '40032':'Microsoft Online Games'}   # did not took '443':'SSL, Web connection' to avoid double 443.
 
 
-# Color scale of edges
+
+
+# 6. Function to set color scale of edges
 viridis = cm.get_cmap('viridis', 12)
 def preprocess_data(df,df2):
     # nodes
@@ -102,16 +122,17 @@ def preprocess_data(df,df2):
     coords_to_node.clear()
     num_to_node.clear()
     node_to_num.clear()
-
-preprocess_data(df,df2)
-
-#### Plots ####
+preprocess_data(df,df2) # Setting the scales
 
 
-fig = go.Figure()
+
+
+
+# 7. Main Plot Functions 
+fig = go.Figure() # Defining the main figure
 pos = {}
 
-#Plot map 
+## 7.1. Returns the figure for geographical map from input Dataframe.
 def plot_map(df):
     df=pd.merge(df,towers[['lat','lon','TowerID']],on='TowerID')
     people=dict(type='scattermapbox',lat=df['lat'],lon=df['lon'],mode='markers')
@@ -134,9 +155,53 @@ def plot_map(df):
     )
 
     return fig
+
+
+#Plot trace
+def plot_movement(df,selected_numbers):
+    data=[]
+    colors=['#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A', '#19D3F3', '#FF6692', '#B6E880', '#FF97FF', '#FECB52']
+    colors_no=0
+    for number in selected_numbers:
+        filtered_df=f=df[df['Caller']==number].sort_values(['Date','Time'])
+        all_lat=[]
+        all_lon=[]
+        locs=[]
+        for (index,row) in filtered_df.iterrows():
+            locs.append([row['lat'],row['lon']])
+        for i in range(len(locs)-1):
+            all_lat,all_lon=addEdgemap(locs[i],locs[i+1],all_lat,all_lon, 1, "middle",0.0045, 30, 10)
+            data.append(go.Scattermapbox(lat=all_lat,lon=all_lon,hovertext=str(number),mode = "lines",marker=go.scattermapbox.Marker(
+                    size=17,
+                    color=colors[color_no],
+                    opacity=1
+                ),
+            ))
+        color_no+=1
+        color_no%=len(colors)
+    fig=go.Figure(data,layout={
+        'mapbox_style':'open-street-map',
+    
+        'mapbox':dict(
+        
+            bearing=0,
+            center=dict(
+                lat=23.2599,
+                lon=77.4126
+            ),
+            pitch=0,
+            zoom=10
+        )
+    
+    })
+    return fig
+
+## 7.2. Main function to get the Figure for the Graph of Calls.
 # Plot Graph of calls
 def plot_network(df, srs, scs):
+
     G = nx.DiGraph()  # networkX Graph
+
     # Reciever Nodes
     selected_callers = []
     selected_receivers = []
@@ -150,11 +215,11 @@ def plot_network(df, srs, scs):
         G.add_edge(x["Caller_node"], x["Receiver_node"])
 
     df.apply(make_graph, axis=1)  # Make a graph
-    pos = nx.nx_agraph.graphviz_layout(G)  # Position of Points
+    pos = nx.nx_agraph.pygraphviz_layout(G)  # Position of Points
 
-    # Add Edges to Plot
-    edge_trace = []
+    edge_trace = [] # Add Edges to Plot
 
+## 7.3. Adds the caller and reciever edge information to each entry. 
     def add_coords(x):
         x0, y0 = pos[x['Caller_node']]
         x1, y1 = pos[x['Receiver_node']]
@@ -175,6 +240,9 @@ def plot_network(df, srs, scs):
         ))  # Graph object for each connection
        
     df.apply(add_coords, axis=1)  # Adding edges
+
+
+## 7.4. Adds the caller and reciever node information.
 
     # adding points
     node_x = []
@@ -206,7 +274,9 @@ def plot_network(df, srs, scs):
             showscale=False,
             symbol=symbols,
             line_width=2,
-            line_color='black'))  # Object for point scatter plot
+            line_color='black'))  # Nodes visual design info.
+
+## 7.5. The main figure for both the edges and nodes data.
     fig = go.Figure(data=edge_trace+[node_trace],
                     layout=go.Layout(
                     titlefont_size=16,
@@ -220,209 +290,230 @@ def plot_network(df, srs, scs):
                                showticklabels=False),
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
                     )  # Complete Figure
-    fig.update_layout(transition_duration=500)  # Transition
-    #fig.update_layout(hover_label_align = 'right')
+    fig.update_layout(transition_duration=500)  # Transition animation dynamics.
+
     fig.update_layout(
-         hoverlabel = dict(bgcolor='white',font_size = 15,font_family = 'Rockwell')
+         hoverlabel = dict(bgcolor='white',font_size = 15,font_family = 'Rockwell')  #Hover-info design.
     )
     fig.update_layout(clickmode='event+select')  # Event method
     fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1), plot_bgcolor='rgb(255,255,255)')
-    #fig.update_traces(marker_size=20)  # marker size
+    fig.update_layout(height=500,width=500)
     return fig
 
-# Create an image for the same. -- What?
 
 
-##### Layout of App #####
 
-#### Callbacks ####
-# Callback to update df used for plotting
+# 8. The HTML Layout of the App.
+
+# NOTE : All the elements here (visual or statistical) are updated through callbacks as defined in section 9
 app.layout = html.Div(children=[
-        html.Div(children=[
-            html.H1(children='CDR Analyser'),  # Title
-            html.H3(children='''
-            Analyse the phone calls between people.
-        '''),  # Subtitle
-            html.Div(
-                id='date-selected'
-            ),  # Date Selected Indicator
-            html.H4(id='message'),  # Message
-        ],id='header-text'),
 
-    dbc.Row(children=[
-            dbc.Col(children=[
-                html.H3(
-                    'Filters'
-                ),
-                html.H5(
-                    'From:'
-                ),
-                dcc.DatePickerSingle(
-                    id='date-picker1',
-                    min_date_allowed=df['Date'].min(),
-                    max_date_allowed=df['Date'].max(),
-                    initial_visible_month=dt(2020, 6, 5),
-                    date=str(dt(2020, 6, 17, 0, 0, 0)),
-                    display_format='DD-MMM-YY'
-                ),  # Data Picker
-                html.H5(
-                    'To:'
-                ),
-                dcc.DatePickerSingle(
-                    id='date-picker2',
-                    min_date_allowed=df['Date'].min(),
-                    max_date_allowed=df['Date'].max(),
-                    initial_visible_month=dt(2020, 6, 5),
-                    date=str(dt(2020, 6, 17, 0, 0, 0)),
-                    display_format='DD-MMM-YY'
-                ),
-                dcc.RangeSlider(
-                    id='duration-slider',
-                    min=0,
-                    max=df['Duration'].max(),
-                    step=None,
-                    marks=durations,
-
-                    value=default_duration_slider_val,
-                    dots=True,
-
-                ),  # Duration Slider
-
-                dcc.RangeSlider(
-                    id='time-slider',
-                    min=0,
-                    max=48,
-                    step=None,
-                    marks=times,
-                    dots=True,
-                    value=[0, 48],
-                    pushable=1
-
-                ),  # Time Slider
-                html.H5(
-                    'Condition for Caller/Reciever'
-                ),
-                dcc.Dropdown(
-                    id='select-caller-receiver',
-                    options=[{'label': 'Only Caller', 'value': 1}]+[{'label': 'Only Receiver', 'value': 2}]+[
-                        {'label': 'Either Caller or Reciever', 'value': 3}]+[{'label': 'Both Caller and Reciever', 'value': 4}],
-                    value=3,
-                ),  # Select if you want the select the numbers to be from Caller/Reciever/Both/Either
-            
-                html.H5(
-                    'Select Caller:'
-                ),
-                dcc.Dropdown(
-                    id='caller-dropdown',
-                    options=[{'label': 'None', 'value': 'None'}] + \
-                    [{'label': k, 'value': k} for k in df['Caller'].unique()],
-                    value='None',
-                    multi=True,
-                ),  # Dropdown for Caller
-                html.H5(
-                    'Select Reciever:'
-                ),
-                dcc.Dropdown(
-                    id='receiver-dropdown',
-                    options=[{'label': 'None', 'value': 'None'}] + \
-                    [{'label': k, 'value': k} for k in df['Receiver'].unique()],
-                    value='None',
-                    multi=True,
-                ),  # Dropdown for Reciever,
-                
-                
-                
-                html.Div([
-                    dcc.Upload(
-                        id='upload-data',
-                        children=html.Div([
-                            'Drag and Drop or ',
-                            html.A('Select a File')
-                        ]),
-                        
-                        # Allow multiple files to be uploaded
-                        multiple=False
-                    ),
-                    html.Div(id='output-data-upload'),
-                ]),
-                html.Button('Reset Filters', id='reset-button', n_clicks=0)
-                ],
-                id='filters',lg=3),  # Filters
-
-        dbc.Col(
-           [
-            html.Div(children=[
-            html.H3('Network Plot '),
-           daq.ToggleSwitch(id='toggle-network-map',value=False, size=40),
-           html.H3('Map Plot')],id='plot-header'),
-            dcc.Graph(
-                id='network-plot'
-
-            ),
-            dcc.Graph(
-                id='map-plot'
-            ),
-            html.H5('The size of the dots denote the total duration of the caller/receiver'),
-            dcc.Markdown("""
-            x -> Selected Caller
-                    Diamond Cross -> Selected Receiver
-                    o -> Other
-            		"""),
-         	dcc.Graph(id='duration-plot'),
-            ],id='plot-area',lg=6),     # Network Plot
-            
-        dbc.Col(children=[
-            html.H3('Statistics'),
-            html.Div([
-                dcc.Markdown("""
-                **Hover To Get Stats** \n
-                Mouse over nodes in the graph to get statistics.
-            """),
-                html.Pre(id='hover-data',)
-            ],),  # Hover Data Container
-
-            html.Div([
-                
-                dcc.Markdown("""
-                **Click to get CDR for a number** \n
-                Click on points in the graph to get the call data records.
-            """),
-                html.Pre(id='click-data', ),
-                dcc.Graph(
-                    id='pie-chart'
-                )
-            ], ),  # Click Data Container
-
-            html.Div([
-                dcc.Markdown("""
-                **Select to see connected people** \n
-                Select using rectangle/lasso or by using your mouse.(Use Shift for multiple selections)
-            """),
-            html.Div(children=[
-                 html.Div([
-                html.Button('Toggle to vizualize Components', id='toggle-components', n_clicks=0),
-            ],
-                
-            ),
-              html.Pre(id='selected-data', ),
-            ], )  
-            ])
-              # Selection Data Container
+                                html.Div(children=[
+                                                    html.H1(children='CDR Analyser'),  # Title
+                                                    html.H3(children='''
+                                                    Analyse the phone calls between people.
+                                                '''),  # Subtitle
+                                                    html.Div(
+                                                        id='date-selected'
+                                                    ),  # Date Selected Indicator
+                                                    html.H4(id='message'),  # Message
+                                                  ],id='header-text'),
 
 
-        ],id='stats',lg=3)
 
-    ],className='container-mid'),
-    html.Div(
-        id='filtered-data',
-        style={'display': 'none'}
-    ),
-    # Filtered Data
-])
-# Callback to filter dataframe
-# REMEMBER WHILE EDITING (RWI): THIS IS A TWO OUTPUT FUNCTION
+                                dbc.Row(children=[
+
+                                                    dbc.Col(children=[
+                                                                        html.H3(
+                                                                            'Filters'
+                                                                        ),
+                                                                        html.H5(
+                                                                            'From:'
+                                                                        ),
+                                                                        dcc.DatePickerSingle(
+                                                                            id='date-picker1',
+                                                                            min_date_allowed=df['Date'].min(),
+                                                                            max_date_allowed=df['Date'].max(),
+                                                                            initial_visible_month=dt(2020, 6, 5),
+                                                                            date=str(dt(2020, 6, 17, 0, 0, 0)),
+                                                                            display_format='DD-MMM-YY'
+                                                                        ),  # Data Picker
+                                                                        html.H5(
+                                                                            'To:'
+                                                                        ),
+                                                                        dcc.DatePickerSingle(
+                                                                            id='date-picker2',
+                                                                            min_date_allowed=df['Date'].min(),
+                                                                            max_date_allowed=df['Date'].max(),
+                                                                            initial_visible_month=dt(2020, 6, 5),
+                                                                            date=str(dt(2020, 6, 17, 0, 0, 0)),
+                                                                            display_format='DD-MMM-YY'
+                                                                        ),
+                                                                        dcc.RangeSlider(
+                                                                            id='duration-slider',
+                                                                            min=0,
+                                                                            max=df['Duration'].max(),
+                                                                            step=None,
+                                                                            marks=durations,
+
+                                                                            value=default_duration_slider_val,
+                                                                            dots=True,
+
+                                                                        ),  # Duration Slider
+
+                                                                        dcc.RangeSlider(
+                                                                            id='time-slider',
+                                                                            min=0,
+                                                                            max=48,
+                                                                            step=None,
+                                                                            marks=times,
+                                                                            dots=True,
+                                                                            value=[0, 48],
+                                                                            pushable=1
+
+                                                                        ),  # Time Slider
+                                                                        html.H5(
+                                                                            'Condition for Caller/Reciever'
+                                                                        ),
+                                                                        dcc.Dropdown(
+                                                                            id='select-caller-receiver',
+                                                                            options=[{'label': 'Only Caller', 'value': 1}]+[{'label': 'Only Receiver', 'value': 2}]+[
+                                                                                {'label': 'Either Caller or Reciever', 'value': 3}]+[{'label': 'Both Caller and Reciever', 'value': 4}],
+                                                                            value=3,
+                                                                        ),  # Select if you want the select the numbers to be from Caller/Reciever/Both/Either
+                                                                    
+                                                                        html.H5(
+                                                                            'Select Caller:'
+                                                                        ),
+                                                                        dcc.Dropdown(
+                                                                            id='caller-dropdown',
+                                                                            options=[{'label': 'None', 'value': 'None'}] + \
+                                                                            [{'label': k, 'value': k} for k in df['Caller'].unique()],
+                                                                            value='None',
+                                                                            multi=True,
+                                                                        ),  # Dropdown for Caller
+                                                                        html.H5(
+                                                                            'Select Reciever:'
+                                                                        ),
+                                                                        dcc.Dropdown(
+                                                                            id='receiver-dropdown',
+                                                                            options=[{'label': 'None', 'value': 'None'}] + \
+                                                                            [{'label': k, 'value': k} for k in df['Receiver'].unique()],
+                                                                            value='None',
+                                                                            multi=True,
+                                                                        ),  # Dropdown for Reciever,
+                                                                        
+                                                                        
+                                                                        
+                                                                        html.Div([
+                                                                                    dcc.Upload(
+                                                                                        id='upload-data',
+                                                                                        children=html.Div([
+                                                                                            'Drag and Drop or ',
+                                                                                            html.A('Select a File')
+                                                                                        ]),
+                                                                                        
+                                                                                        # Allow multiple files to be uploaded
+                                                                                        multiple=False
+                                                                                    ),
+                                                                                    html.Div(id='output-data-upload'),
+                                                                                 ]),
+                                                                        html.Button('Reset Filters', id='reset-button', n_clicks=0)
+                                                                     ],
+                                                                     id='filters',lg=3,),  # Filters
 
 
+
+                                                    dbc.Col(children=[
+                                                                        html.Div(children=[
+                                                                        html.H3('Zoomed out'),
+                                                                       daq.ToggleSwitch(id='zoom',value=False, size=40),
+                                                                        html.H3('Zoomed out')],id='plot-header1'),
+
+                                                                        html.Div(children=[
+                                                                        html.H3('Network Plot '),
+                                                                       daq.ToggleSwitch(id='toggle-network-map',value=False, size=40),
+                                                                       html.H3('Map Plot')],id='plot-header'),
+                                                                        dcc.Graph(
+                                                                            id='network-plot'
+
+                                                                        ),
+                                                                        dcc.Graph(
+                                                                            id='map-plot'
+                                                                        ),
+                                                                        html.H5('The size of the dots denote the total duration of the caller/receiver'),
+                                                                        dcc.Markdown("""
+                                                                        x -> Selected Caller
+                                                                                Diamond Cross -> Selected Receiver
+                                                                                o -> Other
+                                                                                """),
+                                                                        dcc.Graph(id='duration-plot'),
+                                                                     ],id='plot-area',lg=6),     # Network Plot
+
+
+
+                                                    dbc.Col(children=[
+                                                                        html.H3('Statistics'),
+                                                                        html.Div([
+                                                                                    dcc.Markdown("""
+                                                                                                    **Hover To Get Stats** \n
+                                                                                                    Mouse over nodes in the graph to get statistics.
+                                                                                                """),
+                                                                                    html.Pre(id='hover-data',)
+                                                                                ]),  # Hover Data Container
+
+                                                                        html.Div([
+                                                                            
+                                                                                    dcc.Markdown("""
+                                                                                                    **Click to get CDR for a number** \n
+                                                                                                    Click on points in the graph to get the call data records.
+                                                                                """),
+                                                                                    html.Pre(id='click-data', ),
+                                                                                    dcc.Graph(
+                                                                                        id='pie-chart'
+                                                                                    )
+                                                                                ]),  # Click Data Container
+
+                                                                        html.Div([
+                                                                                    dcc.Markdown("""
+                                                                                        **Select to see connected people** \n
+                                                                                        Select using rectangle/lasso or by using your mouse.(Use Shift for multiple selections)
+                                                                                    """),
+
+                                                                                    html.Div(children=[
+                                                                                                         html.Div([
+                                                                                                        html.Button('Toggle to vizualize Components', id='toggle-components', n_clicks=0),
+                                                                                                                  ]),
+
+                                                                                                          html.Pre(id='selected-data', ),
+                                                                                                      ])  
+                                                                                ])
+                                                                          # Selection Data Container
+
+
+                                                                     ],id='stats',lg=3)
+
+                                                 ],className='container-mid'), # End of dbc.Row(...)
+
+
+
+                                html.Div(
+                                    id='filtered-data',
+                                    style={'display': 'none'}
+                                        ), # Filtered Data
+    
+                                ]) #End of app.layout
+
+
+
+
+# 9. Callbacks to process the dataframe according to Filters
+
+## NOTE:  REMEMBER WHILE EDITING (RWI): THIS IS A TWO OUTPUT FUNCTION
+
+
+
+## 9.1. TO UPDATE THE DataFrame BASED ON ALL FILTER VALUES.
 @app.callback(
     [Output(component_id='filtered-data', component_property='children'),
      Output(component_id='message', component_property='children')],
@@ -470,10 +561,10 @@ def update_filtered_div_caller(contents, selected_date1, selected_date2, selecte
     else:
         # Update Filtered Dataframe
         return filtered_df.to_json(date_format='iso', orient='split'), 'Updated'
-# Callback for hover data
-# Display Stats in hoverdata
 
 
+
+## 9.2. TO UPDATE THE HOVER DATA OF THE SELECTED NODE.
 @app.callback(
     Output('hover-data', 'children'),
     [Input('network-plot', 'hoverData'), Input(component_id='filtered-data', component_property='children')])
@@ -504,10 +595,9 @@ def display_hover_data(hoverData, filtered_data):
         return hd
     return "Hover data..."
 
-# Callback for Network Plot
-# Show table for the clicked phone number
 
 
+## 9.3. TO UPDATE THE DURATION PLOT AND IPDR USAGE PIE-CHART FOR A NODE.
 @app.callback(
     [Output('click-data', 'children'), Output('pie-chart','figure'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
     [Input('network-plot', 'clickData'), Input('map-plot','clickData'), Input('toggle-network-map', 'value')])
@@ -560,20 +650,21 @@ def display_click_data(clickData, clickData2, mode):
 #Callback to output the new figure for Duration plot of selected node.
 def plot_Duration(new_df):
 
-	if new_df is not None:
+    if new_df is not None:
 
-		x = sorted(new_df["Date"])
-		y = new_df["Duration"]
-		fig = go.Figure([ go.Scatter(x = x, y = y,
-	                           mode='lines+markers',
-	                            name='plot') ])  
-		return fig
-	else:
-		return None
+        x = sorted(new_df["Date"])
+        y = new_df["Duration"]
+        fig = go.Figure([ go.Scatter(x = x, y = y,
+                               mode='lines+markers',
+                                name='plot') ])  
+        return fig
+    else:
+        return None
 
 
+
+## 9.4. TO UPDTAE THE COMPONENT LIST FOR THE SELECTED DATA
 l = []
-# Callback for Selected Data
 @app.callback(
     Output('selected-data', 'children'),
     [Input('network-plot', 'selectedData'), Input(component_id='filtered-data', component_property='children')])
@@ -600,6 +691,9 @@ def display_selected_data(selectedData, filtered_data):
         return s
     return json.dumps(selectedData, indent=2)
 
+
+
+## 9.5. TO UPDATE THE RECEIVER-DROPDOWN IN MAP MODE.
 @app.callback(
     Output(component_id='receiver-dropdown', component_property='value'), [Input('toggle-components', 'n_clicks')]
 )
@@ -612,6 +706,10 @@ def update_receiver_value(n_clicks):
         return k
     else:
         return 'None'
+
+
+
+## 9.6. TO UPDATE THE CALLER-DROPDOWN IN MAP MODE.         
 @app.callback(
     Output(component_id='caller-dropdown', component_property='value'), [Input('toggle-components', 'n_clicks')]
 )
@@ -624,14 +722,31 @@ def update_caller_value(n_clicks):
         return k
     else:
         return 'None'
-# Callback to update network plot
+
+
+
+## 9.7. TO UPDATE THE MAIN PLOT w.r.t. SELECTED RECEIVERS & CALLERS. 
 @app.callback(
     Output(component_id='network-plot', component_property='figure'),
-    [Input(component_id='filtered-data', component_property='children'), Input(component_id='receiver-dropdown', component_property='value'), Input(component_id='caller-dropdown', component_property='value')]
+    [Input(component_id='zoom', component_property='value'),Input(component_id='filtered-data', component_property='children'), Input(component_id='receiver-dropdown', component_property='value'), Input(component_id='caller-dropdown', component_property='value')]
 )
-def update_network_plot_caller(filtered_data, srs, scs):
-    return plot_network(pd.read_json(filtered_data, orient='split'), srs, scs)
+def update_network_plot_caller(zoom,filtered_data, srs, scs):
+    # if zoom == True and fig['layout']['height'] != 850:
+    #     fig['layout']['height']=850
+    #     fig['layout']['width']=850
+    #     return fig
+    # if zoom == False and fig['layout']['height'] != 500:
+    #     fig['layout']['height']=500
+    #     fig['layout']['width']=500
+    #     return fig
+    fig = plot_network(pd.read_json(filtered_data, orient='split'), srs, scs)
+    if zoom == True:
+        fig.update_layout(height=850, width=850)
+    return fig
 
+
+
+## 9.7. TO UPDATE THE MAIN PLOT AFTER FILTERING THE DATA FROM 9.1.
 # Callback to update map plot
 @app.callback(
     Output(component_id='map-plot',component_property='figure'),
@@ -641,7 +756,9 @@ def update_network_plot_caller(filtered_data, srs, scs):
 def update_map_plot_callback(filtered_data):
     return plot_map(pd.read_json(filtered_data, orient='split'))
 
-# Toggle Map and Netowork Plot
+
+
+## 9.8. TO TOGGLE BETWEEN MAP OR NETWORK PLOT
 @app.callback(
     [Output(component_id='network-plot',component_property='style'),Output(component_id='map-plot',component_property='style')],
     [Input(component_id='toggle-network-map',component_property='value')]
@@ -652,10 +769,9 @@ def toggle_network_map(toggle):
     else:
         return  {'display':'none'},{'display':'block'}
 
-# TODO UPDATE THESE CALLBACKS TO INCLUDE TIME AND DURATION UPDATES
-# Callback to change selectors including caller no. according to date
 
 
+## 9.10. TO CHANGE THE AVAILABLE ENTRIES IN CALLER-DROPDOWN MENU ACCORDING TO THE DATE RANGE SELECTED.
 @app.callback(
     Output(component_id='caller-dropdown', component_property='options'),
     [Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date')]
@@ -663,9 +779,9 @@ def toggle_network_map(toggle):
 def update_phone_div_caller(selected_date1, selected_date2):
     return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))]['Caller'].unique()]
 
-# Callback to change reciever according  to dates
 
 
+## 9.11. TO CHANGE THE AVAILABLE ENTRIES IN RECEIVER-DROPDOWN MENU ACCORDING TO THE DATE RANGE SELECTED.
 @app.callback(
     Output(component_id='receiver-dropdown', component_property='options'),
     [Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date')]
@@ -673,15 +789,28 @@ def update_phone_div_caller(selected_date1, selected_date2):
 def update_phone_div_receiver(selected_date1, selected_date2):
     return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))]['Receiver'].unique()]
 
-# Reset Filters
-@app.callback(
-	[Output('date-picker1', 'date'), Output('date-picker2', 'date'), Output('duration-slider', 'value'), Output('time-slider', 'value'), Output('select-caller-receiver', 'value')],
-	[Input('reset-button', 'n_clicks')]
-	)
-def ResetFilters(button_reset):
-	return str(dt(2020, 6, 17, 0, 0, 0)), str(dt(2020, 6, 17, 0, 0, 0)), default_duration_slider_val, default_time_slider_val, default_caller_receiver_val
 
-#### Run Server ####
+
+## 9.12. TO RESET ALL FILTERS (except condition, caller and reciever drop-down menus)
+@app.callback(
+    [Output('date-picker1', 'date'), Output('date-picker2', 'date'), Output('duration-slider', 'value'), Output('time-slider', 'value'), Output('select-caller-receiver', 'value')],
+    [Input('reset-button', 'n_clicks')]
+    )
+def ResetFilters(button_reset):
+    return str(dt(2020, 6, 17, 0, 0, 0)), str(dt(2020, 6, 17, 0, 0, 0)), default_duration_slider_val, default_time_slider_val, default_caller_receiver_val
+
+
+@app.callback(
+    [Output(component_id='plot-area', component_property='lg'),
+     Output(component_id='filters', component_property='style')],
+    [Input('zoom', 'value')]
+)
+def Zoom(mode):
+    if mode == True:
+        return 9, {'display':'none'}
+    else:
+        return 6, {'display':'block'}
+########################################################## Run Server ##########################################################
 server=app.server
 if __name__ == '__main__':
     app.run_server(debug=True)
