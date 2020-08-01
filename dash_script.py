@@ -644,28 +644,34 @@ def display_hover_data(hoverData, filtered_data):
 ## 9.3. TO UPDATE THE DURATION PLOT AND IPDR USAGE PIE-CHART FOR A NODE.
 @app.callback(
     [Output('display-selected-num','children'),Output('click-data', 'children'), Output('pie-chart','figure'),Output('click-data-ipdr', 'children'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
-    [Input('network-plot', 'clickData'),Input(component_id='filtered-data', component_property='children')])
-def display_click_data(clickData,filtered_data):
+    [Input('network-plot', 'clickData'),Input(component_id='filtered-data', component_property='children'),Input(component_id='map-plot',component_property='value')]
+)
+def display_click_data(clickData,filtered_data,clickData_map,mode):
     df = pd.read_json(filtered_data, orient='split')
-    if clickData is not None and 'marker.size' in clickData['points'][0]:
-        nodeNumber = coords_to_node[(
-            clickData['points'][0]['x'], clickData['points'][0]['y'])]
-        groups=df[df['IMEI_node']==nodeNumber].groupby('App_name')['Caller'].count()
-    
-        fig = go.Figure(data=dict(type='pie',values=groups,labels=groups.index))
-        fig.update_layout(showlegend=False)
-  
-        # Filtering DF
-        new_df = df[((df['Receiver_node'] !=-1)&(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber))][data_columns]
+    if mode==False:
+        if clickData is not None and 'marker.size' in clickData['points'][0]:
+            nodeNumber = coords_to_node[(
+                clickData['points'][0]['x'], clickData['points'][0]['y'])]
+            groups=df[df['IMEI_node']==nodeNumber].groupby('App_name')['Caller'].count()
         
-        x=df[(df['Caller_node'] == nodeNumber)]['Caller'].unique()[0]
-        new_df_ipdr = df[(df['Caller_node'] == nodeNumber)][data_columns_ipdr]
+            fig = go.Figure(data=dict(type='pie',values=groups,labels=groups.index))
+            fig.update_layout(showlegend=False)
+    
+            # Filtering DF
+            new_df = df[((df['Receiver_node'] !=-1)&(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber))][data_columns]
+            
+            x=df[(df['Caller_node'] == nodeNumber)]['Caller'].unique()[0]
+            new_df_ipdr = df[(df['Caller_node'] == nodeNumber)][data_columns_ipdr]
 
-        new_df_ipdr=new_df_ipdr[new_df_ipdr['App_name'].notna()]
+            new_df_ipdr=new_df_ipdr[new_df_ipdr['App_name'].notna()]
 
-        return str(x),new_df.to_string(index=False), fig,new_df_ipdr.to_string(index=False), plot_Duration(new_df)
-    return 'None',"Click on a node to view more data",go.Figure(),"Click on a node to view more data", go.Figure() #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
-
+            return str(x),new_df.to_string(index=False), fig,new_df_ipdr.to_string(index=False), plot_Duration(new_df)
+        return 'None',"Click on a node to view more data",go.Figure(),"Click on a node to view more data", go.Figure() #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+    else:
+        if clickData_map is not None and 'marker' in clickData_map['points'][0]:
+            cur_lat = clickData_map['points'][0]['lat'], cur_lon = clickData_map['points'][0]['lon']
+            new_towers = towers[(towers['lat']==cur_lat) & (towers['lon']==cur_lon)]
+            return str(new_towers),go.Figure(),go.Figure() 
 
 
 #Callback to output the new figure for Duration plot of selected node.
