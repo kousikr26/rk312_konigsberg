@@ -604,5 +604,6 @@ def ResetFilters(button_reset):
 	return str(dt(2020, 6, 17, 0, 0, 0)), str(dt(2020, 6, 17, 0, 0, 0)), default_duration_slider_val, default_time_slider_val, default_caller_receiver_val
 
 #### Run Server ####
+server=app.server
 if __name__ == '__main__':
-    app.run_server(debug=True, host='0.0.0.0')
+    app.run_server(debug=True)

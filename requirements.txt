@@ -31,3 +31,4 @@ plotly == 4.8.2
 
 # cdr-viz/dash-implementation/dash_script.py: 15
 pygraphviz == 1.5
+gunicorn == 20.0.4
