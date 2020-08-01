@@ -139,8 +139,8 @@ def addEdgemap(start, end, edge_x, edge_y, lengthFrac=1, arrowPos = None, arrowL
         edge_y.append(pointy - signx**2 * signy * dy2)
 #         edge_y.append(None)
         
-        edge_x.append(pointx - signx**2 * signy * dx)
-        edge_y.append(pointy - signx**2 * signy * dy)
+#         edge_x.append(pointx - signx**2 * signy * dx)
+#         edge_y.append(pointy - signx**2 * signy * dy)
         edge_x.append(None)
         edge_y.append(None)
         
