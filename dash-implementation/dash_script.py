@@ -131,10 +131,17 @@ def plot_map(df):
     })
     return fig
 # Plot Graph of calls
-def plot_network(df):
+def plot_network(df, srs, scs):
     G = nx.DiGraph()  # networkX Graph
     # Reciever Nodes
-
+    selected_callers = []
+    selected_receivers = []
+    if srs != 'None':
+        for p in srs:
+            selected_receivers.append(int(p))
+    if scs != 'None':
+        for p in scs:
+            selected_callers.append(int(p))
     def make_graph(x):
         G.add_edge(x["Caller_node"], x["Receiver_node"])
 
@@ -170,12 +177,19 @@ def plot_network(df):
     node_y = []
     total_duration = []
     hover_list = []
+    symbols = []
     for node in pos:
         x, y = pos[node]
         coords_to_node[(x, y)] = node
         hover_list.append(str(node_to_num[node]))
         node_x.append(x)
         node_y.append(y)
+        if node_to_num[node] in selected_callers:
+            symbols.append('x')
+        elif node_to_num[node] in selected_receivers:
+            symbols.append('diamond-cross')
+        else:
+            symbols.append('circle')
         total_duration.append(15*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
     node_trace = go.Scatter(
         x=node_x, y=node_y,
@@ -186,6 +200,7 @@ def plot_network(df):
         marker=dict(
             size=total_duration,
             showscale=False,
+            symbol=symbols,
             line_width=2,
             line_color='black'))  # Object for point scatter plot
     fig = go.Figure(data=edge_trace+[node_trace],
@@ -512,7 +527,7 @@ def plot_Duration(new_df):
 		return None
 
 
-components = []
+l = []
 # Callback for Selected Data
 @app.callback(
     Output('selected-data', 'children'),
@@ -523,8 +538,9 @@ def display_selected_data(selectedData, filtered_data):
     print(selectedData)
     if selectedData is not None:
        
-        global components
-        l=[]
+        global l
+        components=[]
+        l.clear()
         for point in selectedData['points']:
             l.append(node_to_num[coords_to_node[point['x'], point['y']]])
         components = bfs(l, df)
@@ -546,10 +562,9 @@ def display_selected_data(selectedData, filtered_data):
 def update_receiver_value(n_clicks):
     if n_clicks%2 == 1:
         k = []
-        global components
-        for x in components:
-            for y in x:
-                k.append(y)
+        global l
+        for x in l:
+            k.append(x)
         return k
     else:
         return 'None'
@@ -559,20 +574,19 @@ def update_receiver_value(n_clicks):
 def update_caller_value(n_clicks):
     if n_clicks%2 == 1:
         k = []
-        global components
-        for x in components:
-            for y in x:
-                k.append(y)
+        global l
+        for x in l:
+            k.append(x)
         return k
     else:
         return 'None'
 # Callback to update network plot
 @app.callback(
     Output(component_id='network-plot', component_property='figure'),
-    [Input(component_id='filtered-data', component_property='children')]
+    [Input(component_id='filtered-data', component_property='children'), Input(component_id='receiver-dropdown', component_property='value'), Input(component_id='caller-dropdown', component_property='value')]
 )
-def update_network_plot_caller(filtered_data):
-    return plot_network(pd.read_json(filtered_data, orient='split'))
+def update_network_plot_caller(filtered_data, srs, scs):
+    return plot_network(pd.read_json(filtered_data, orient='split'), srs, scs)
 
 # TODO UPDATE THESE CALLBACKS TO INCLUDE TIME AND DURATION UPDATES
 # Callback to change selectors including caller no. according to date
