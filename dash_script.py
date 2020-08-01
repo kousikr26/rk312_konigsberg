@@ -132,6 +132,46 @@ def plot_map(df):
     })
 
     return fig
+#Plot trace
+def plot_traces(df,selected_numbers):
+    data=[]
+    colors=['#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A', '#19D3F3', '#FF6692', '#B6E880', '#FF97FF', '#FECB52']
+    colors_no=0
+    for number in selected_numbers:
+        filtered_df=f=df[df['Caller']==number].sort_values(['Date','Time'])
+        all_lat=[]
+        all_lon=[]
+        locs=[]
+        for (index,row) in filtered_df.iterrows():
+            locs.append([row['lat'],row['lon']])
+        for i in range(len(locs)-1):
+            all_lat,all_lon=addEdgemap(locs[i],locs[i+1],all_lat,all_lon, 1, "middle",0.0045, 30, 10)
+            data.append(go.Scattermapbox(lat=all_lat,lon=all_lon,hovertext=str(number),mode = "lines",marker=go.scattermapbox.Marker(
+                    size=17,
+                    color=colors[color_no],
+                    opacity=1
+                ),
+            ))
+        color_no+=1
+        color_no%=len(colors)
+    fig=go.Figure(data,layout={
+        'mapbox_style':'open-street-map',
+    
+        'mapbox':dict(
+        
+            bearing=0,
+            center=dict(
+                lat=23.2599,
+                lon=77.4126
+            ),
+            pitch=0,
+            zoom=10
+        )
+    
+    })
+    return fig
+
+
 # Plot Graph of calls
 def plot_network(df, srs, scs):
     G = nx.DiGraph()  # networkX Graph
