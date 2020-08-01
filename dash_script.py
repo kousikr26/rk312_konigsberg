@@ -17,7 +17,7 @@ from stats import *
 import dash_bootstrap_components as dbc
 import dash_daq as daq
 import math
-
+from math import radians, sin, sqrt, cos, atan2
 ########################################################## Import functions for Breadth First Search ##########################
 from addEdge import addEdge
 from BFSN import bfs
@@ -324,20 +324,21 @@ app.layout = html.Div(children=[
                                                                         html.H3(
                                                                             'Filters'
                                                                         ),
+
                                                                         html.H5(
-                                                                            'From:'
+                                                                            'From:  To:'
                                                                         ),
-                                                                        dcc.DatePickerSingle(
-                                                                            id='date-picker1',
-                                                                            min_date_allowed=df['Date'].min(),
-                                                                            max_date_allowed=df['Date'].max(),
-                                                                            initial_visible_month=dt(2020, 6, 5),
-                                                                            date=str(dt(2020, 6, 17, 0, 0, 0)),
-                                                                            display_format='DD-MMM-YY'
-                                                                        ),  # Data Picker
-                                                                        html.H5(
-                                                                            'To:'
-                                                                        ),
+                                                                        html.Div([
+                                                                            dcc.DatePickerSingle(
+                                                                                id='date-picker1',
+                                                                                min_date_allowed=df['Date'].min(),
+                                                                                max_date_allowed=df['Date'].max(),
+                                                                                initial_visible_month=dt(2020, 6, 5),
+                                                                                date=str(dt(2020, 6, 17, 0, 0, 0)),
+                                                                                display_format='DD-MMM-YY'
+                                                                            )],  # Data Picker
+                                                                            style={'width': '49%', 'display': 'inline-block'}),
+                                                                        html.Div([
                                                                         dcc.DatePickerSingle(
                                                                             id='date-picker2',
                                                                             min_date_allowed=df['Date'].min(),
@@ -345,7 +346,8 @@ app.layout = html.Div(children=[
                                                                             initial_visible_month=dt(2020, 6, 5),
                                                                             date=str(dt(2020, 6, 17, 0, 0, 0)),
                                                                             display_format='DD-MMM-YY'
-                                                                        ),
+                                                                        )],
+                                                                        style={'width': '49%', 'display': 'inline-block'}),
                                                                         dcc.RangeSlider(
                                                                             id='duration-slider',
                                                                             min=0,
@@ -369,6 +371,25 @@ app.layout = html.Div(children=[
                                                                             pushable=1
 
                                                                         ),  # Time Slider
+                                                                        html.Div([
+                                                                        dcc.Slider(
+                                                                            id='radius-slider',
+                                                                            min=0,
+                                                                            max=20,
+                                                                            step=None,
+                                                                            marks={
+                                                                                0: '0 km',
+                                                                                5: '5 km',
+                                                                                10: '10 km',
+                                                                                15: '15 km',
+                                                                                20: '20 km'
+                                                                            },
+                                                                            value=0)],
+                                                                            id='radius-div',
+                                                                            style={
+                                                                                'display':'none'
+                                                                            }
+                                                                        ),
                                                                         html.H5(
                                                                             'Condition for Caller/Reciever'
                                                                         ),
@@ -425,7 +446,7 @@ app.layout = html.Div(children=[
                                                                         html.Div(children=[
                                                                         html.H3('Zoomed out'),
                                                                        daq.ToggleSwitch(id='zoom',value=False, size=40),
-                                                                        html.H3('Zoomed out')],id='plot-header1'),
+                                                                        html.H3('Zoomed in')],id='plot-header1'),
 
                                                                         html.Div(children=[
                                                                         html.H3('Network Plot '),
@@ -509,15 +530,16 @@ app.layout = html.Div(children=[
 ## NOTE:  REMEMBER WHILE EDITING (RWI): THIS IS A TWO OUTPUT FUNCTION
 
 
-
+sel_lat = 0
+sel_lon = 0
 ## 9.1. TO UPDATE THE DataFrame BASED ON ALL FILTER VALUES.
 @app.callback(
     [Output(component_id='filtered-data', component_property='children'),
      Output(component_id='message', component_property='children')],
-    [Input('upload-data', 'contents'),Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date'), Input(component_id='duration-slider', component_property='value'), Input(component_id='time-slider', component_property='value'),
+    [Input('radius-slider', 'value'),Input('upload-data', 'contents'),Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date'), Input(component_id='duration-slider', component_property='value'), Input(component_id='time-slider', component_property='value'),
      Input(component_id='select-caller-receiver', component_property='value'), Input(component_id='caller-dropdown', component_property='value'), Input(component_id='receiver-dropdown', component_property='value')]
 )
-def update_filtered_div_caller(contents, selected_date1, selected_date2, selected_duration, selected_time, selected_option, selected_caller, selected_receiver):
+def update_filtered_div_caller(radius,contents, selected_date1, selected_date2, selected_duration, selected_time, selected_option, selected_caller, selected_receiver):
     # Date,Time,Duration Filter
     if contents is not None:
         content_type, content_string = contents.split(',')
@@ -529,6 +551,30 @@ def update_filtered_div_caller(contents, selected_date1, selected_date2, selecte
     filtered_df = df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date'] <= pd.to_datetime(selected_date2))
                      & ((df['Duration'] >= selected_duration[0]) & (df['Duration'] <= selected_duration[1]))
                      & ((df['Time'] < times[selected_time[1]]['label']) & (df['Time'] >= times[selected_time[0]]['label']))].reset_index(drop=True)
+    def chk(lat1,lon1,radius):
+        R = 6373.0
+        global sel_lat
+        global sel_lon
+        lat2 = sel_lat
+        lon2 = sel_lon
+
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+
+        a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        distance = R * c
+        print(distance)
+        if distance > radius:
+            return False
+        return True
+
+    if radius != 0:
+        towers_c = towers.copy()
+        ver = towers_c.apply(lambda x: chk(x['lat'],x['lon'],radius), axis=1)
+        towers_req = towers_c[ver]['TowerID'].unique()
+        filtered_df = filtered_df[filtered_df['TowerID'].isin(towers_req)]
 
     # Number Filter
     # If Caller is Selected
@@ -789,6 +835,18 @@ def Zoom(mode):
         return 9, {'display':'none'}
     else:
         return 6, {'display':'block'}
+
+@app.callback(
+    Output('radius-div', 'style'),
+    [Input('map-plot', 'clickData')])
+def display_click_data(clickData):
+    if clickData is None:
+        return {'display': 'none'}
+    else:
+        global sel_lon, sel_lat
+        sel_lat = float(clickData['points'][0]['lat'])
+        sel_lon = float(clickData['points'][0]['lon'])
+        return {'display': 'block'}
 ########################################################## Run Server ##########################################################
 server=app.server
 if __name__ == '__main__':
