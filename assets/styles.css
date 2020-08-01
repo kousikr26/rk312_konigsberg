@@ -78,3 +78,18 @@ margin-left: 10%;
     margin-top:12px;
     margin-left:60%;
 }
+#plot-header{
+    text-align: center;
+    /* width:40%; */
+    display: inline-flex;
+}
+#plot-header h3{
+    width:40%
+}
+#plot-header h3:first-child{
+    margin-left: 100%;
+    /* width:40%; */
+}
+#toggle-network-map{
+    width:20%
+}

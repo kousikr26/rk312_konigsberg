@@ -15,6 +15,7 @@ from dash.dependencies import Input, Output, State
 from datetime import datetime as dt
 from stats import *
 import dash_bootstrap_components as dbc
+import dash_daq as daq
 import math
 ### Import functions for Breadth First Search ###
 from addEdge import addEdge
@@ -35,8 +36,9 @@ app.title = 'CDR/IPDR Analyser'
 default_duration_slider_val = [0, 100]
 default_time_slider_val = [0,48]
 default_caller_receiver_val = 3
-
 date_format='%d-%m-%Y'
+## Load towers
+towers=pd.read_csv('./data/towers_min.csv')
 # Loop to generate marks for Time
 time_str = ['0', '0', ':', '0', '0']
 times = {0: {'label': "".join(time_str), "style": {
@@ -111,11 +113,11 @@ pos = {}
 
 #Plot map 
 def plot_map(df):
-
+    df=pd.merge(df,towers[['lat','lon','TowerID']],on='TowerID')
     people=dict(type='scattermapbox',lat=df['lat'],lon=df['lon'],mode='markers')
     fig=go.Figure(people,layout={
         'mapbox_style':'open-street-map',
-    
+        'margin': dict(l = 0, r = 0, t = 0, b = 0),
         'mapbox':dict(
         
             bearing=0,
@@ -128,6 +130,7 @@ def plot_map(df):
         )
         
     })
+
     return fig
 # Plot Graph of calls
 def plot_network(df, srs, scs):
@@ -206,7 +209,7 @@ def plot_network(df, srs, scs):
                     layout=go.Layout(
                     titlefont_size=16,
                     hovermode='closest',
-                    margin=dict(b=20, l=5, r=5, t=40),
+                    margin=dict(b=0, l=0, r=0, t=0),
                     annotations=[dict(
                         showarrow=True,
                         xref="paper", yref="paper",
@@ -345,14 +348,23 @@ app.layout = html.Div(children=[
                 id='filters',lg=3),  # Filters
 
         dbc.Col(
-           [ html.H3('Network Graph : '),
+           [
+            html.Div(children=[
+            html.H3('Network Plot '),
+           daq.ToggleSwitch(id='toggle-network-map',value=False, size=40),
+           html.H3('Map Plot')],id='plot-header'),
             dcc.Graph(
                 id='network-plot'
 
             ),
-            html.H5('The size of the dots denote the total duration of the caller/callee'),
+            dcc.Graph(
+                id='map-plot'
+            ),
+            html.H5('The size of the dots denote the total duration of the caller/receiver'),
             dcc.Markdown("""
-             		1. The Duration the selected person has spent on exchanging calls over time
+            x -> Selected Caller
+                    Diamond Cross -> Selected Receiver
+                    o -> Other
             		"""),
          	dcc.Graph(id='duration-plot'),
             ],id='plot-area',lg=6),     # Network Plot
@@ -498,19 +510,32 @@ def display_hover_data(hoverData, filtered_data):
     [Output('click-data', 'children'), Output('pie-chart','figure'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
     [Input('network-plot', 'clickData')])
 def display_click_data(clickData):
+    emptyPlot= go.Figure()
+    emptyPlot.update_layout(
+    showlegend=False,
+    annotations=[
+        dict(
+            x=3,
+            y=1.5,
+            xref="x",
+            yref="y",
+            text="Click a point to get started",
+            showarrow=False
+            
+        )
+    ]
+)
     if clickData is not None and 'marker.size' in clickData['points'][0]:
         nodeNumber = coords_to_node[(
             clickData['points'][0]['x'], clickData['points'][0]['y'])]
         groups=df2[df2['IMEI_node']==nodeNumber].groupby('App_name')['IMEI'].count()
-        print(groups,nodeNumber)
         fig = go.Figure(data=dict(type='pie',values=groups,labels=groups.index))
         fig.update_layout(showlegend=False)
-        print(fig)
         # Filtering DF
         new_df = df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns]
 
         return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns].to_string(index=False), fig, plot_Duration(new_df)
-    return "Click on a node to view more data",go.Figure(),go.Figure() #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+    return "Click on a node to view more data",emptyPlot,emptyPlot #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
 #Callback to output the new figure for Duration plot of selected node.
 def plot_Duration(new_df):
 
@@ -534,7 +559,6 @@ l = []
 def display_selected_data(selectedData, filtered_data):
     df = pd.read_json(filtered_data, orient='split')
     # TODO #3 Graph should also be filtered and only nodes in component should be displayed
-    print(selectedData)
     if selectedData is not None:
        
         global l
@@ -586,6 +610,26 @@ def update_caller_value(n_clicks):
 )
 def update_network_plot_caller(filtered_data, srs, scs):
     return plot_network(pd.read_json(filtered_data, orient='split'), srs, scs)
+
+# Callback to update map plot
+@app.callback(
+    Output(component_id='map-plot',component_property='figure'),
+    [Input(component_id='filtered-data', component_property='children')]
+
+)
+def update_map_plot_callback(filtered_data):
+    return plot_map(pd.read_json(filtered_data, orient='split'))
+
+# Toggle Map and Netowork Plot
+@app.callback(
+    [Output(component_id='network-plot',component_property='style'),Output(component_id='map-plot',component_property='style')],
+    [Input(component_id='toggle-network-map',component_property='value')]
+)
+def toggle_network_map(toggle):
+    if toggle==False:
+        return {'display':'block'}, {'display':'none'}
+    else:
+        return  {'display':'none'},{'display':'block'}
 
 # TODO UPDATE THESE CALLBACKS TO INCLUDE TIME AND DURATION UPDATES
 # Callback to change selectors including caller no. according to date
