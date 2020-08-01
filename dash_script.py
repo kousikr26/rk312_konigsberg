@@ -192,7 +192,7 @@ def plot_network(df, srs, scs):
             symbols.append('diamond-cross')
         else:
             symbols.append('circle')
-        total_duration.append(15*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
+        total_duration.append(20*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
     node_trace = go.Scatter(
         x=node_x, y=node_y,
         mode='markers',
@@ -353,12 +353,16 @@ app.layout = html.Div(children=[
             html.H3('Network Plot '),
            daq.ToggleSwitch(id='toggle-network-map',value=False, size=40),
            html.H3('Map Plot')],id='plot-header'),
-            dcc.Graph(
-                id='network-plot'
-
-            ),
+            html.Div(children=[
             dcc.Graph(
                 id='map-plot'
+            ),
+            html.H5('Each node represents a tower.'),],id='map-plot-div'
+            ),
+            html.Div(children=[
+             dcc.Graph(
+                id='network-plot'
+
             ),
             html.H5('The size of the dots denote the total duration of the caller/receiver'),
             dcc.Markdown("""
@@ -366,7 +370,8 @@ app.layout = html.Div(children=[
                     Diamond Cross -> Selected Receiver
                     o -> Other
             		"""),
-         	dcc.Graph(id='duration-plot'),
+         	], id='network-plot-div'),
+             dcc.Graph(id='duration-plot'),
             ],id='plot-area',lg=6),     # Network Plot
             
         dbc.Col(children=[
@@ -543,9 +548,9 @@ def plot_Duration(new_df):
 
 		x = sorted(new_df["Date"])
 		y = new_df["Duration"]
-		fig = go.Figure([ go.Scatter(x = x, y = y,
-	                           mode='lines+markers',
-	                            name='plot') ])  
+		fig = go.Figure([ go.Bar(x = x, y = y,
+	                          
+	                            name='duration-plot') ])  
 		return fig
 	else:
 		return None
@@ -622,7 +627,7 @@ def update_map_plot_callback(filtered_data):
 
 # Toggle Map and Netowork Plot
 @app.callback(
-    [Output(component_id='network-plot',component_property='style'),Output(component_id='map-plot',component_property='style')],
+    [Output(component_id='network-plot-div',component_property='style'),Output(component_id='map-plot-div',component_property='style')],
     [Input(component_id='toggle-network-map',component_property='value')]
 )
 def toggle_network_map(toggle):
