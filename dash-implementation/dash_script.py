@@ -527,7 +527,7 @@ def plot_Duration(new_df):
 		return None
 
 
-components = []
+l = []
 # Callback for Selected Data
 @app.callback(
     Output('selected-data', 'children'),
@@ -538,8 +538,9 @@ def display_selected_data(selectedData, filtered_data):
     print(selectedData)
     if selectedData is not None:
        
-        global components
-        l=[]
+        global l
+        components=[]
+        l.clear()
         for point in selectedData['points']:
             l.append(node_to_num[coords_to_node[point['x'], point['y']]])
         components = bfs(l, df)
@@ -561,10 +562,9 @@ def display_selected_data(selectedData, filtered_data):
 def update_receiver_value(n_clicks):
     if n_clicks%2 == 1:
         k = []
-        global components
-        for x in components:
-            for y in x:
-                k.append(y)
+        global l
+        for x in l:
+            k.append(x)
         return k
     else:
         return 'None'
@@ -574,10 +574,9 @@ def update_receiver_value(n_clicks):
 def update_caller_value(n_clicks):
     if n_clicks%2 == 1:
         k = []
-        global components
-        for x in components:
-            for y in x:
-                k.append(y)
+        global l
+        for x in l:
+            k.append(x)
         return k
     else:
         return 'None'
