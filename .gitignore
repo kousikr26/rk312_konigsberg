@@ -1,6 +1,6 @@
-dash-implementation/data/404.csv
-dash-implementation/data/405.csv
-dash-implementation/.ipynb_checkpoints
-dash-implementation/__pycache__
+data/404.csv
+data/405.csv
+.ipynb_checkpoints
+__pycache__
 .vscode/
 *.pyc
