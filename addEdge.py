@@ -116,7 +116,10 @@ def addEdgemap(start, end, edge_x, edge_y, lengthFrac=1, arrowPos = None, arrowL
             pointy = y0 + (y1-y0)/2
             
         # Find the directions the arrows are pointing
-        signx = (x1-x0)/abs(x1-x0)
+        if x1!=x0:
+            signx = (x1-x0)/abs(x1-x0)
+        else:
+            signx = 0
         signy = (y1-y0)/abs(y1-y0)
         
         # Append first arrowhead

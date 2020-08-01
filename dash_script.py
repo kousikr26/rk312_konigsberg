@@ -19,7 +19,7 @@ import dash_daq as daq
 import math
 
 ########################################################## Import functions for Breadth First Search ##########################
-from addEdge import addEdge
+from addEdge import addEdge,addEdgemap
 from BFSN import bfs
 
 
@@ -159,12 +159,16 @@ def plot_map(df):
 def plot_movement(df,selected_numbers):
     data=[]
     colors=['#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A', '#19D3F3', '#FF6692', '#B6E880', '#FF97FF', '#FECB52']
-    colors_no=0
+    color_no=0
+    df=pd.merge(df,towers[['lat','lon','TowerID']],on='TowerID')
     for number in selected_numbers:
-        filtered_df=f=df[df['Caller']==number].sort_values(['Date','Time'])
+        
+        
+        filtered_df=df[df['Caller']==number].sort_values(['Date','Time'])
         all_lat=[]
         all_lon=[]
         locs=[]
+
         for (index,row) in filtered_df.iterrows():
             locs.append([row['lat'],row['lon']])
         for i in range(len(locs)-1):
@@ -431,6 +435,7 @@ app.layout = html.Div(children=[
                                                                             id='network-plot'
 
                                                                         ),
+                                                                        dcc.Graph(id='movement-plot'),
                                                                         dcc.Graph(
                                                                             id='map-plot'
                                                                         ),
@@ -641,7 +646,7 @@ def plot_Duration(new_df):
 ## 9.4. TO UPDTAE THE COMPONENT LIST FOR THE SELECTED DATA
 l = []
 @app.callback(
-    Output('selected-data', 'children'),
+    [Output('selected-data', 'children'),Output('movement-plot','figure')],
     [Input('network-plot', 'selectedData'), Input(component_id='filtered-data', component_property='children')])
 def display_selected_data(selectedData, filtered_data):
     df = pd.read_json(filtered_data, orient='split')
@@ -663,8 +668,8 @@ def display_selected_data(selectedData, filtered_data):
             i += 1
             for number in component:
                 s += "\t" + str(number) + "\n"
-        return s
-    return json.dumps(selectedData, indent=2)
+        return s,plot_movement(df,l)
+    return json.dumps(selectedData, indent=2),go.Figure()
 
 
 
