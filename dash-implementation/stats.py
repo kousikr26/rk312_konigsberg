@@ -1,7 +1,7 @@
 import pandas as pd
 def meanDur(nodeNumber,df):
     #print(df['Caller_node'].unique(),df['Receiver_node'].unique(),nodeNumber)
-    return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber) ]['Duration'].mean()
+    return df[(df['Receiver_node']!=-1)&((df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)) ]['Duration'].mean()
 
 #returns a dictionary with the number of minutes of talk
 #time corresponding to each hour of the day
@@ -11,7 +11,7 @@ def peakHours(nodeNumber,df):
     m = {}
     for i in range(24):
         m[i] = 0
-    df1 = df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber) ]
+    df1 = df[(df['Receiver_node']!=-1)&((df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)) ]
     for i in list(df1.index):
         h = int(df1.at[i,'Time'][0:2])
         min = int(df1.at[i,'Time'][3:5])
@@ -58,7 +58,7 @@ def mostCalls(nodeNumber,df):
     m1 = {}
     m2 = {}
     m3 = {}
-    df1 = df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber) ]
+    df1 = df[(df['Receiver_node']!=-1)&((df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)) ]
     for i in list(df1.index):
         if df1.at[i,'Caller_node'] == nodeNumber:
             if df1.at[i,'Receiver'] in m1:

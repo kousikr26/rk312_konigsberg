@@ -27,8 +27,8 @@ external_stylesheets = [dbc.themes.SANDSTONE]
 
 
 # Load  Data
-df = pd.read_csv('./data/data.csv')
-df2 = pd.read_csv('./data/ipdr_data.csv')
+df = pd.read_csv('./data/final_data.csv')
+#df2 = pd.read_csv('./data/ipdr_data.csv')
 
 #### Create App ###
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -55,7 +55,7 @@ for i in range(0, 48):
                       "style": {"transform": "rotate(-90deg) translateY(-15px)"}}
 # Generating marks for duration slider
 durations = {}
-for i in range(0, df['Duration'].max(), 5):
+for i in range(0, int(df['Duration'].max()), 5):
     durations[i] = str(i)
 
 
@@ -70,7 +70,7 @@ data_columns_ipdr = ["IMEI","Private IP","Private Port", "Public IP", "Public Po
     "End Date","End Time", "CELL_ID", "Uplink Volume","Downlink Volume","Total Volume","I_RATTYPE"]
 
 
-ports_to_apps = {'DEST PORT':'App','5223':'WhatsApp','5228':'WhatsApp', '4244':'WhatsApp', '5222':'WhatsApp', '5242':'WhatsApp','443':'Skype',\
+ports_to_apps = {'DEST PORT':'App','0':'nan','5223':'WhatsApp','5228':'WhatsApp', '4244':'WhatsApp', '5222':'WhatsApp', '5242':'WhatsApp','443_':'Skype','443':'SSL',\
     '3478-3481':'Skype','49152-65535':'Skype','80':'Web connection','8080':'Web Connection', \
         '8081': 'Web Connection', '993':'IMAP', '143':'IMAP', '8024':'iTunes', '8027':'iTunes', '8013':'iTunes', \
             '8017':'iTunes', '8003':'iTunes', '7275':'iTunes', '8025':'iTunes', '8009':'iTunes',\
@@ -84,9 +84,11 @@ ports_to_apps = {'DEST PORT':'App','5223':'WhatsApp','5228':'WhatsApp', '4244':'
 
 # Color scale of edges
 viridis = cm.get_cmap('viridis', 12)
-def preprocess_data(df,df2):
+def preprocess_data(df):
     # nodes
-    nodes = np.union1d(df['Caller'].unique(), df['Receiver'].unique())
+    l=df['Receiver'].unique()
+    l=l[l!=20000] # to remove occurrences of 20000
+    nodes = np.union1d(df['Caller'].unique(),l )
     # Define Color
     df['Dura_color'] = (df['Duration']/df['Duration'].max()).apply(viridis)
     df['Date'] = df['Date'].apply(pd.to_datetime).dt.date
@@ -95,16 +97,17 @@ def preprocess_data(df,df2):
     df['Caller_node'] = df['Caller'].apply(
         lambda x: list(nodes).index(x))  # Caller Nodes
     
-    df['Receiver_node'] = df['Receiver'].apply(lambda x: list(nodes).index(x))
+#    df['Receiver_node'] = df['Receiver'].apply(lambda x: list(nodes).index(x))
+    df['Receiver_node'] = df['Receiver'].apply(lambda x: list(nodes).index(x) if x!=20000 else -1)
 
-    df2['IMEI_node'] = df2['IMEI'].apply(lambda x: list(nodes).index(x))
-    df2['App_name'] = df2['DEST PORT'].apply(lambda x:ports_to_apps[str(x)])
+    df['IMEI_node'] = df['Caller'].apply(lambda x: list(nodes).index(x) if x!=20000 else -1)
+    df['App_name'] = df['DEST PORT'].apply(lambda x:ports_to_apps[str(x)] if (ports_to_apps[str(x)]!='nan') else None)
 
     coords_to_node.clear()
     num_to_node.clear()
     node_to_num.clear()
 
-preprocess_data(df,df2)
+preprocess_data(df)
 #### Plots ####
 # Plot Graph of calls
 
@@ -423,7 +426,7 @@ def update_filtered_div_caller(contents, selected_date1, selected_date2, selecte
         decoded = base64.b64decode(content_string)
         global df
         df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-        preprocess_data(df,df2)
+        preprocess_data(df)
 
     filtered_df = df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date'] <= pd.to_datetime(selected_date2))
                      & ((df['Duration'] >= selected_duration[0]) & (df['Duration'] <= selected_duration[1]))
@@ -502,7 +505,7 @@ def display_click_data(clickData):
     if clickData is not None:
         nodeNumber = coords_to_node[(
             clickData['points'][0]['x'], clickData['points'][0]['y'])]
-        groups=df2[df2['IMEI_node']==nodeNumber].groupby('App_name')['IMEI'].count()
+        groups=df[df['IMEI_node']==nodeNumber].groupby('App_name')['Caller'].count()
         print(groups,nodeNumber)
         fig = go.Figure(data=dict(type='pie',values=groups,labels=groups.index))
         fig.update_layout(showlegend=False)
@@ -510,8 +513,8 @@ def display_click_data(clickData):
         # Filtering DF
         new_df = df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns]
 
-        return df[(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber)][data_columns].to_string(index=False), fig, plot_Duration(new_df)
-    return "Click on a node to view more data",go.Figure() #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+        return df[((df['Receiver_node'] !=-1))&((df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber))][data_columns].to_string(index=False), fig, plot_Duration(new_df)
+    return "Click on a node to view more data",go.Figure(), go.Figure() #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
 
 
 
@@ -582,7 +585,7 @@ def update_phone_div_caller(selected_date1, selected_date2):
     Output(component_id='receiver-dropdown', component_property='options'),
     [Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date')]
 )
-def update_phone_div_receiver(selected_date1, selected_date2):
+def update_phone_div_receiver1(selected_date1, selected_date2):
     return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))]['Receiver'].unique()]
 
 
@@ -590,7 +593,7 @@ def update_phone_div_receiver(selected_date1, selected_date2):
     Output(component_id='find-dropdown', component_property='options'),
     [Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date')]
 )
-def update_phone_div_receiver(selected_date1, selected_date2):
+def update_phone_div_receiver2(selected_date1, selected_date2):
     return [{'label': 'None', 'value': ''}]+[{'label': k, 'value': k} for k in pd.unique(df[(df['Date'] >= pd.to_datetime(selected_date1)) & (df['Date']<=pd.to_datetime(selected_date2))][['Receiver','Caller']].values.ravel())]
 
 
