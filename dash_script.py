@@ -144,6 +144,8 @@ pos = {}
 def plot_map(df):
     df=pd.merge(df,towers[['lat','lon','TowerID']],on='TowerID')
     people=dict(type='scattermapbox',lat=df['lat'],lon=df['lon'],mode='markers')
+
+
     fig=go.Figure(people,layout={
         'mapbox_style':'open-street-map',
         'margin': dict(l = 0, r = 0, t = 0, b = 0),
@@ -156,9 +158,9 @@ def plot_map(df):
             ),
             pitch=0,
             zoom=10
-        )
+        )}
         
-    })
+    )
 
     return fig
 
@@ -300,7 +302,7 @@ def plot_network(df, srs, scs):
     )
     fig.update_layout(clickmode='event+select')  # Event method
     fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1), plot_bgcolor='rgb(255,255,255)')
-
+    fig.update_layout(height=500,width=500)
     return fig
 
 
@@ -458,11 +460,16 @@ app.layout = html.Div(children=[
 
                                                                         html.Button('Reset Filters', id='reset-button', n_clicks=0)
                                                                      ],
-                                                                     id='filters',lg=3),  # Filters
+                                                                     id='filters',lg=3,),  # Filters
 
 
 
                                                     dbc.Col(children=[
+                                                                        html.Div(children=[
+                                                                       html.Img(src='assets/close.png',id='collapse-filters'),
+                                                                  
+                                                                        ],id='plot-header1'),
+
                                                                         html.Div(children=[
                                                                         html.H3('Network Plot '),
                                                                        daq.ToggleSwitch(id='toggle-network-map',value=False, size=40),
@@ -657,6 +664,21 @@ def display_hover_data(hoverData, filtered_data,hoverDataMap):
     [Output('display-selected-num','children'),Output('click-data', 'children'), Output('pie-chart','figure'),Output('click-data-ipdr', 'children'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
     [Input('network-plot', 'clickData'),Input(component_id='filtered-data', component_property='children')])
 def display_click_data(clickData,filtered_data):
+    emptyPlot= go.Figure()
+    emptyPlot.update_layout(
+    showlegend=False,
+    annotations=[
+        dict(
+            x=3,
+            y=1.5,
+            xref="x",
+            yref="y",
+            text="Click a point to get started",
+            showarrow=False
+
+        )
+    ]
+)
     df = pd.read_json(filtered_data, orient='split')
     if clickData is not None and 'marker.size' in clickData['points'][0]:
         nodeNumber = coords_to_node[(
@@ -686,9 +708,9 @@ def plot_Duration(new_df):
 
         x = sorted(new_df["Date"])
         y = new_df["Duration"]
-        fig = go.Figure([ go.Scatter(x = x, y = y,
-                               mode='lines+markers',
-                                name='plot') ])  
+        fig = go.Figure([ go.Bar(x = x, y = y,
+                              
+                                name='duration-plot') ])  
         return fig
     else:
         return None
@@ -757,10 +779,22 @@ def update_caller_value(n_clicks):
 ## 9.7. TO UPDATE THE MAIN PLOT w.r.t. SELECTED RECEIVERS & CALLERS. 
 @app.callback(
     Output(component_id='network-plot', component_property='figure'),
-    [Input(component_id='filtered-data', component_property='children'), Input(component_id='receiver-dropdown', component_property='value'), Input(component_id='caller-dropdown', component_property='value')]
+    [Input(component_id='collapse-filters', component_property='n_clicks'),Input(component_id='filtered-data', component_property='children'), Input(component_id='receiver-dropdown', component_property='value'), Input(component_id='caller-dropdown', component_property='value')]
 )
-def update_network_plot_caller(filtered_data, srs, scs):
-    return plot_network(pd.read_json(filtered_data, orient='split'), srs, scs)
+def update_network_plot_caller(n_clicks,filtered_data, srs, scs):
+    # if zoom == True and fig['layout']['height'] != 850:
+    #     fig['layout']['height']=850
+    #     fig['layout']['width']=850
+    #     return fig
+    # if zoom == False and fig['layout']['height'] != 500:
+    #     fig['layout']['height']=500
+    #     fig['layout']['width']=500
+    #     return fig
+    fig = plot_network(pd.read_json(filtered_data, orient='split'), srs, scs)
+    if n_clicks!= None and n_clicks%2==1:
+        fig.update_layout(height=850, width=1000)
+    
+    return fig
 
 
 
@@ -827,7 +861,16 @@ def ResetFilters(button_reset):
     return str(dt(2020, 6, 17, 0, 0, 0)), str(dt(2020, 6, 17, 0, 0, 0)), default_duration_slider_val, default_time_slider_val, default_caller_receiver_val
 
 
-
+@app.callback(
+    [Output(component_id='plot-area', component_property='lg'),
+     Output(component_id='filters', component_property='style')],
+    [Input('collapse-filters', 'n_clicks')]
+)
+def Zoom(mode):
+    if mode!=None and mode%2==1 :
+        return 9, {'display':'none'}
+    else:
+        return 6, {'display':'block'}
 ########################################################## Run Server ##########################################################
 server=app.server
 if __name__ == '__main__':
