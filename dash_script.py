@@ -64,10 +64,16 @@ for i in range(0, 48):
         time_str[3] = '3'
         times[i+1] = {'label': "".join(time_str), "style": {'display': 'none'}}
     else:
-        time_str = list(
-            str(int("".join(time_str[0:2])) + 1).zfill(2) + str(':00'))
-        times[i+1] = {'label': "".join(time_str),
-                      "style": {"transform": "rotate(-90deg) translateY(-15px)"}}
+        if i%4==3:
+            time_str = list(
+                        str(int("".join(time_str[0:2])) + 1).zfill(2) + str(':00'))
+            times[i+1] = {'label': "".join(time_str),
+                                "style": {"transform": "rotate(-90deg) translateY(-15px)"}}
+        else:
+            time_str = list(
+                str(int("".join(time_str[0:2])) + 1).zfill(2) + str(':00'))
+            times[i+1] = {'label': "".join(time_str),
+                        "style": {"transform": "rotate(-90deg) translateY(-15px)",'display':'none'}}
 
 ## 4.2. Generating marks for duration slider
 durations = {}
@@ -327,11 +333,11 @@ def plot_network(df, srs, scs):
 
     fig.update_layout(
          hoverlabel = dict(bgcolor='white',font_size = 15,font_family = 'Rockwell'),
-         width=800  #Hover-info design.
+          #Hover-info design.
     )
     fig.update_layout(clickmode='event+select')  # Event method
     fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1), plot_bgcolor='rgb(255,255,255)')
-    fig.update_layout(height=500,width=900)
+    fig.update_layout(height=500)
     return fig
 
 
@@ -341,7 +347,25 @@ def plot_network(df, srs, scs):
 
 # NOTE : All the elements here (visual or statistical) are updated through callbacks as defined in section 9
 app.layout = html.Div(children=[
-
+                                html.Div(children=[
+                                    html.Img(
+                                        src='assets/filter.png',width='20px',id='collapse-filters'
+                                    ),
+                                    html.Img(
+                                        src='assets/reset.png',width='20px',id='reset-button',n_clicks=0
+                                    ),
+                                     dcc.Upload(
+                                                                                        id='upload-data',
+                                                                                        children=html.Img(src='assets/file-upload.png',
+                                                                                        width='20px'),
+                                                                                        
+                                                                                        # Allow multiple files to be uploaded
+                                                                                        multiple=False
+                                                                                    ),
+                                     html.Div(id='output-data-upload'),
+                                   
+                                    
+                                ],id='sidebar'),
                                 html.Div(children=[ 
                                                     html.Div([
                                                     html.Img(src='assets/Logo.jpeg',height='50px'),
@@ -403,9 +427,7 @@ app.layout = html.Div(children=[
                                                                             ''
                                                                         ),# For visual clarity
                                                                         
-                                                                        html.Div([
-                                                                        
-                                                                       ],id='from-to'),
+                                                                      
                                                                         html.Div([
                                                                         html.Div([html.H5(
                                                                             'From:'
@@ -495,49 +517,37 @@ app.layout = html.Div(children=[
                                                                        
                                                                         
                                                                         html.Div([
-                                                                                    dcc.Upload(
-                                                                                        id='upload-data',
-                                                                                        children=html.Div([
-                                                                                            'Drag and Drop or ',
-                                                                                            html.A('External File')
-                                                                                        ]),
-                                                                                        
-                                                                                        # Allow multiple files to be uploaded
-                                                                                        multiple=False
-                                                                                    ),
-                                                                                    html.Div(id='output-data-upload'),
+                                                                                   
                                                                                  ]),
                                                                         html.H5(
                                                                             ''
                                                                         ),# For visual clarity
-                                                                        html.Div([dbc.Button('Reset',size="lg", id='reset-button', className='buttons',n_clicks=0)])
+                                                                        
                                                                         
                                                                      ],
-                                                                     id='filters',lg=3,),  # Filters
+                                                                     id='filters',lg=2,),  # Filters
 
 
 
                                                     dbc.Col(children=[
-                                                                        html.Div(children=[
-                                                                       html.Img(src='assets/close.png',id='collapse-filters'),
-                                                                  
-                                                                        ],id='plot-header1'),
+                                                                       
 
                                                                         html.Div(children=[
                                                                         html.H3('Network Plot '),
                                                                        daq.ToggleSwitch(id='toggle-network-map',value=False, size=40),
                                                                        html.H3('Map Plot')],id='plot-header'),
-                                                                        html.Div([dcc.Graph(
+                                                                        html.Div([
+                                                                        html.Div([
+                                                                        dcc.Graph(
                                                                             id='network-plot'
 
-                                                                        ),
-                                                                                                                                           
+                                                                        ), 
                                                                         html.H5('The size of the dots and the width of the edges denote the total duration of the caller/receiver'),
                                                                         dcc.Markdown("""
                                                                         x -> Selected Caller
                                                                                 Diamond Cross -> Selected Receiver
                                                                                 o -> Other
-                                                                                """),
+                                                                                """),] ,id='network-plot-div'),
                                                                         html.Div(children=[
                                                                         html.H3('Movement'),
                                                                        daq.ToggleSwitch(id='toggle-movement-time',value=False, size=40),
@@ -559,7 +569,7 @@ app.layout = html.Div(children=[
                                                                                                      Mouse over nodes in the graph to get statistics.
                                                                                                 """),
                                                                                     html.Pre(id='hover-data',)
-                                                                                ]),  # Hover Data Container
+                                                                                ],id='hover-data-div'),  # Hover Data Container
 
                                                                       html.Div([
                                                                             html.H3('Click:'),
@@ -917,7 +927,7 @@ def update_network_plot_caller(n_clicks,filtered_data, srs, scs):
     #     return fig
     fig = plot_network(pd.read_json(filtered_data, orient='split'), srs, scs)
     if n_clicks!= None and n_clicks%2==1:
-        fig.update_layout(height=500, width=1000)
+        fig.update_layout(height=500)
     
     return fig
 
