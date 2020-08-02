@@ -363,7 +363,7 @@ app.layout = html.Div(children=[
 				                                        src='assets/reset.png',width='20px',id='reset-button',n_clicks=0, style={'cursor':'pointer'}
 				                                    ),
                                                     html.Img(
-				                                        src='assets/reset.png',width='20px',id='fix-button',n_clicks=0, style={'cursor':'pointer'}
+				                                        src='assets/drag.png',width='20px',id='fix-button',n_clicks=0, style={'cursor':'pointer'}
 				                                    ),
 				                                   	dcc.Upload(
 				                                                                                        id='upload-data',
