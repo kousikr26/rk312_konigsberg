@@ -948,6 +948,7 @@ def display_hover_data(hoverData, filtered_data,hoverDataMap):
         hd += "Most Calls: " + str(z[2]) + "\n"
         return hd
         
+        
     if hoverDataMap is not None:
     
         cur_lat,cur_lon=hoverDataMap['points'][0]['lat'],hoverDataMap['points'][0]['lon']
