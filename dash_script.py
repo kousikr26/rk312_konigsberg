@@ -25,6 +25,16 @@ import requests
 import dash_draggable
 from math import radians, sin, sqrt, cos, atan2
 from dash_layout import *
+from ml_layout import *
+from datetime import datetime
+
+import numpy as np 
+from scipy import stats 
+import matplotlib.pyplot as plt 
+import matplotlib.font_manager 
+from sklearn.covariance import EllipticEnvelope
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
 ########################################################## Import functions for Breadth First Search ##########################
 from addEdge import addEdge,addEdgemap
 from BFSN import bfs
@@ -389,9 +399,9 @@ sel_lon = 0
     [Output(component_id='filtered-data', component_property='children'),
      Output(component_id='message', component_property='children')],
     [Input('radius-slider', 'value'),Input('upload-data', 'contents'),Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date'), Input(component_id='duration-slider', component_property='value'), Input(component_id='time-slider', component_property='value'),
-     Input(component_id='select-caller-receiver', component_property='value'), Input(component_id='caller-dropdown', component_property='value'), Input(component_id='receiver-dropdown', component_property='value')]
+     Input(component_id='select-caller-receiver', component_property='value'), Input(component_id='caller-dropdown', component_property='value'), Input(component_id='receiver-dropdown', component_property='value'),Input(component_id='ml-mode', component_property='value'),Input(component_id='contamination-slider', component_property='value')]
 )
-def update_filtered_div_caller(radius,contents, selected_date1, selected_date2, selected_duration, selected_time, selected_option, selected_caller, selected_receiver):
+def update_filtered_div_caller(radius,contents, selected_date1, selected_date2, selected_duration, selected_time, selected_option, selected_caller, selected_receiver,ml_value,contamination):
     # Date,Time,Duration Filter
     if contents is not None:
         content_type, content_string = contents.split(',')
@@ -450,6 +460,20 @@ def update_filtered_div_caller(radius,contents, selected_date1, selected_date2, 
         if selected_caller != 'None' and selected_receiver != 'None':
             filtered_df = df[((filtered_df['Caller'].isin(list(selected_caller))) & (
                 filtered_df['Receiver'].isin(list(selected_receiver))))].reset_index(drop=True)
+    if ml_value in [1,2,3]:
+        filtered_df=pd.merge(filtered_df,towers[['lat','lon','TowerID']],on='TowerID')
+        filtered_df['Time_new']=pd.to_datetime(filtered_df['Time'],format='%H:%M:%S')
+        filtered_df["Time_new"]=filtered_df["Time_new"].apply(lambda x: (x - x.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds())
+        contamination/=100
+        if (ml_value==1):
+            iso=IsolationForest(contamination=contamination)
+        elif(ml_value==2):
+            iso=EllipticEnvelope(contamination=contamination)
+        elif(ml_value==3):
+            iso=LocalOutlierFactor(contamination=contamination)
+    
+        mask=iso.fit_predict(filtered_df[["Time_new","Duration","lat","lon"]])==-1
+        filtered_df=filtered_df[mask].drop(['lat','lon','Time_new'],axis=1)
     if filtered_df.shape[0] == 0:
         # No update since nothing matches
         return dash.no_update, 'Nothing Matches that Query'
