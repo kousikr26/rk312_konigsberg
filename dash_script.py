@@ -48,7 +48,7 @@ app.title = 'CDR/IPDR Analyser'
 
 
 # 3. Setting Default Variables for various Filters ####
-default_duration_slider_val = [0, 100]
+default_duration_slider_val = [0, 100]    ## Also needed in dash_layout.py
 default_time_slider_val = [0,48]
 default_caller_receiver_val = 3
 date_format='%d-%m-%Y'
@@ -57,7 +57,7 @@ date_format='%d-%m-%Y'
 
 
 # 4. Miscellaneous variables 
-## 4.1. Slider Markers and Loop to generate marks for Time
+## 4.1. Slider Markers and Loop to generate marks for Time   ##Required in dash_layout
 time_str = ['0', '0', ':', '0', '0']
 times = {0: {'label': "".join(time_str), "style": {
     "transform": "rotate(-90deg) translateY(-15px)"}}}
@@ -349,7 +349,7 @@ def plot_network(df, srs, scs):
     fig.update_layout(height=500)
     return fig
 
-
+# store layout (after app.layout) in file and try to import that
 
 
 # 8. The HTML Layout of the App.
@@ -574,8 +574,8 @@ def display_selected_data(selectedData, filtered_data):
     if selectedData is not None:
         l = []
         for point in selectedData['points']:
-            l.append(node_to_num[coords_to_node[point['x'], point['y']]])
-        components = bfs(l, df[df['Receiver']!=20000].reset_index(drop=True))
+                l.append(node_to_num[coords_to_node[point['x'], point['y']]])
+        components = bfs(l, df)
         s = ""
         i = 1
         for component in components:
@@ -584,7 +584,8 @@ def display_selected_data(selectedData, filtered_data):
             s += "Component "+str(i)+":\n"
             i += 1
             for number in component:
-                s += "\t" + str(number) + "\n"
+                if number!=20000:       #TO NOT DISPLAY 20000 (FROM IPDR ROWS) IN THE COMPONENT SECTION
+                    s += "\t" + str(number) + "\n"
         return s,plot_movement(df,l)
 
     return json.dumps(selectedData, indent=2),go.Figure(layout=dict(margin= dict(l = 0, r = 0, t = 0, b = 0)))

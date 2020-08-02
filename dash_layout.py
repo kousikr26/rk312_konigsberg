@@ -117,7 +117,6 @@ dash_layout = html.Div(children=[
                                                                          html.H5(
                                                                             'Condition for Caller/Reciever:'
                                                                         ),
-
                                                                         dcc.Dropdown(
                                                                             id='select-caller-receiver',
                                                                             options=[{'label': 'Only Caller', 'value': 1}]+[{'label': 'Only Receiver', 'value': 2}]+[
