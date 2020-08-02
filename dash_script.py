@@ -792,7 +792,8 @@ def display_click_data(clickData,filtered_data):
   
         # Filtering DF
         new_df = df[((df['Receiver_node'] !=-1)&(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber))][data_columns]
-        
+        new_df_final = new_df[['Receiver','Date','TowerID']]
+
         x=df[(df['Caller_node'] == nodeNumber)]['Caller'].unique()
         if x.shape[0]>0:
             x=x[0]
@@ -801,8 +802,8 @@ def display_click_data(clickData,filtered_data):
         new_df_ipdr = df[(df['Caller_node'] == nodeNumber)][data_columns_ipdr]
 
         new_df_ipdr=new_df_ipdr[new_df_ipdr['App_name'].notna()]
-
-        return str(x),new_df.to_string(index=False), fig,new_df_ipdr.to_string(index=False), plot_Duration(new_df)
+        new_df_ipdr_final = new_df_ipdr[["App_name","Total Volume","Date","Time","Duration","Private IP"]]
+        return str(x),new_df_final.to_string(index=False), fig,new_df_ipdr_final.to_string(index=False), plot_Duration(new_df)
     return 'None',"Click on points in the graph to get the call data records.\n\n",emptyPlot,"Click on points in the graph to get the internet data records.\n\n" , emptyPlot #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
 
 
