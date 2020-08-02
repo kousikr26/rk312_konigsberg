@@ -12,6 +12,7 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_daq as daq
+import dash_table
 from dash.dependencies import Input, Output, State
 from datetime import datetime as dt
 from stats import *
@@ -91,6 +92,10 @@ node_to_num = {}  # Dictionary that stores node number to phone number
 num_to_node = {}  #Dictionary that stores numbers to node
 data_columns = ["Caller", "Receiver", "Date",
                 "Time", "Duration", "TowerID", "IMEI"]
+
+final_data_columns = ["Receiver","Date","TowerID"]
+
+final_ipdr_columns = ["App_name","Total Volume","Date","Time","Duration","Private IP"]
 
 data_columns_ipdr = ["Caller","App_name","Private IP","Private Port", "Public IP", "Public Port", "Dest IP","DEST PORT", "MSISDN", "IMSI", "Date","Time",\
     "Duration", "TowerID", "Uplink Volume","Downlink Volume","Total Volume","I_RATTYPE"]
@@ -585,9 +590,16 @@ app.layout = html.Div(children=[
                                                                         html.H3('Calls '),
                                                                        daq.ToggleSwitch(id='toggle-cdr-ipdr',value=False, size=40),
                                                                        html.H3('Internet')],id='switch-cdr-ipdr'),
-                                                                            html.Div([
-                                                                            html.Pre(id='click-data', ),
-                                                                            ],id='click-data-cdr'),
+                                                                            # html.Div([
+                                                                            # html.Pre(id='click-data-table', )]
+                                                                            # , id='click-data-cdr-table'),   
+                                                                                   
+                                                                            html.Div([html.Pre(id='click-data-table',)],id='click-cdr-data-table'),                                            
+                                                                    
+                                                                            dash_table.DataTable(id='click-data-cdr-table', columns=(
+                                                                               [{'id': header, 'name': header} for header in final_data_columns]
+                                                                            ),),
+                                
                                                                             html.Div([
                                                                             dcc.Markdown(
                                                                             	"#### Usage Statistics of various Apps"
@@ -601,17 +613,22 @@ app.layout = html.Div(children=[
                                                                             		"**App usage of the person selected**"
                                                                             	),
 
-                                                                            html.Pre(id='click-data-ipdr', ),
+                                                                            #html.Pre(id='click-data-ipdr-table', ),
+                                                                            dash_table.DataTable(id='click-data-ipdr-table', columns=(
+                                                                                 [{'id': header, 'name': header} for header in final_ipdr_columns] 
+                                                                             ),),
 
                                                                             dcc.Markdown(
                                                                             		"**The information of all the other persons who were using the same App during the constraints selected**"
                                                                             	),
 
-                                                                            html.Pre(id='click-data-ipdr-piechart')],id='click-data-ipdr-div')
+                                                                            html.Pre(id='click-data-ipdr-piechart')],id='click-data-ipdr-div'),
+                                                                            
 
-
+                                    
                                                                         ]),  # Click Data Container
-                                                      
+                                                
+                                                                        
 
                                                                         html.Div([
                                                                             html.H3('Select'),
@@ -770,8 +787,9 @@ def display_hover_data(hoverData, filtered_data,hoverDataMap):
 
 ## 9.3. TO UPDATE THE DURATION PLOT AND IPDR USAGE PIE-CHART FOR A NODE.
 @app.callback(
-    [Output('display-selected-num','children'),Output('click-data', 'children'), Output('pie-chart','figure'), Output('click-data-ipdr', 'children'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
-    [Input('network-plot', 'clickData'), Input(component_id='filtered-data', component_property='children')])
+    [Output('display-selected-num','children'),Output('click-data-cdr-table', 'data'), 
+    Output('pie-chart','figure'), Output('click-data-ipdr-table', 'data'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
+    [Input('network-plot', 'clickData'), Input(component_id='filtered-data', component_property='children'),Input(component_id='click-data-cdr-table', component_property='columns'),Input(component_id='click-data-ipdr-table', component_property='columns')])
 def display_click_data(clickData,filtered_data):
     emptyPlot= go.Figure()
     emptyPlot.update_layout(
@@ -802,7 +820,7 @@ def display_click_data(clickData,filtered_data):
   
         # Filtering DF
         new_df = df[((df['Receiver_node'] !=-1)&(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber))][data_columns]
-        new_df_final = new_df[['Receiver','Date','TowerID']]
+        new_df_final = new_df[final_data_columns]
 
         x=df[(df['Caller_node'] == nodeNumber)]['Caller'].unique()
         if x.shape[0]>0:
@@ -812,10 +830,10 @@ def display_click_data(clickData,filtered_data):
         new_df_ipdr = df[(df['Caller_node'] == nodeNumber)][data_columns_ipdr]
 
         new_df_ipdr=new_df_ipdr[new_df_ipdr['App_name'].notna()]
-        new_df_ipdr_final = new_df_ipdr[["App_name","Total Volume","Date","Time","Duration","Private IP"]]
-        return str(x),new_df_final.to_string(index=False), fig,new_df_ipdr_final.to_string(index=False), plot_Duration(new_df)
-    return 'None',"Click on points in the graph to get the call data records.\n\n",emptyPlot,"Click on points in the graph to get the internet data records.\n\n" , emptyPlot #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
-
+        new_df_ipdr_final = new_df_ipdr[final_ipdr_columns]
+        return str(x),dash_table.DataTable(new_df_final.to_string(index=False)), fig,dash_table.DataTable(new_df_ipdr_final.to_string(index=False)), plot_Duration(new_df)
+    #return 'None',"Click on points in the graph to get the call data records.\n\n",emptyPlot,"Click on points in the graph to get the internet data records.\n\n" , emptyPlot #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+    return 'None',[],emptyPlot,[],emptyPlot
 
 
 @app.callback(
@@ -967,7 +985,7 @@ def toggle_movement_time(toggle):
     else:
         return {'display': 'block'},{'display':'none'}
 @app.callback(
-    [Output(component_id='click-data-cdr',component_property='style'),Output(component_id='click-data-ipdr-div',component_property='style')],
+    [Output(component_id='click-data-cdr-table',component_property='style'),Output(component_id='click-data-ipdr-div',component_property='style')],
     [Input(component_id='toggle-cdr-ipdr',component_property='value')]
 )
 def toggle_cdr_ipdr(toggle):
