@@ -50,7 +50,7 @@ dash_layout = html.Div(children=[
                         children=[
                         html.Div(       id = 'login-page',
                                 children = [
-                                        html.Div(children=[dcc.Input(id='username', type='text', value=''),dcc.Input(id='password', type='text', value='')]),
+                                        html.Div(children=[dcc.Input(id='username', type='text', value=''),dcc.Input(id='password', type='password', value='')]),
                                             html.Button('Submit', id='login-button')
                                 ]
                                 )
