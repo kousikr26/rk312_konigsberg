@@ -9,7 +9,7 @@ from dash.dependencies import Input, Output, State
 from datetime import datetime as dt
 import dash_bootstrap_components as dbc
 import dash_draggable
-
+from ml_layout import *
 
 
 df = pd.read_csv('./data/final_data.csv')
@@ -302,6 +302,7 @@ dash_layout = html.Div(children=[
 
 
                                                                         html.Div([''],className='largespacing'),
+                                                                        ml_layout,
   
                                                                         html.Div([
                                                                         dcc.Slider(
