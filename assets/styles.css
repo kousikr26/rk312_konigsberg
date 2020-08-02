@@ -1,14 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Recursive:wght@300&display=swap');
 *{
-    font-family: 'Recursive',sans-serif;
+    font-family: 'Verdana',sans-serif;
+    font-size: medium;
     color:#3d5a80;
 }
 body {
-    background-size: 20px 20px;
-    background-image:
-      linear-gradient(to right, #0353a4 1px, transparent 2px),
-      linear-gradient(to bottom, #0353a4 1px, transparent 2px);
-    background-color: #faf9f9;
+    /* background-size: 20px 20px; */
+    /* background-image:url('./background.jpg'); */
+      background-image: linear-gradient(to bottom right, #74ebd5,#acb6e5);
+    /* background-color: #f0f8ff; */
   }
 pre {
     border: thin lightgrey solid;
@@ -64,7 +64,7 @@ margin-left: 0%;
     border-style: dashed;
     border-radius: 5px;
     text-align: center;
-    margin-bottom':12px;
+    margin-bottom:12px;
     margin-top:12px
 }
 #toggle-components{
@@ -92,4 +92,19 @@ margin-left: 0%;
 }
 #toggle-network-map{
     width:20%
+}
+.spacing{
+    /* margin-top:100px; */
+    margin-bottom:20px;
+}
+.largespacing{
+margin-bottom:60px;
+}
+.buttons{
+      border: none;
+  color: white;
+  padding: 15px 15px;
+  width:'200%';
+ 
+  font-size: 20px;
 }

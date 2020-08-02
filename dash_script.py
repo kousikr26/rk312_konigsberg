@@ -70,7 +70,7 @@ for i in range(0, 48):
 
 ## 4.2. Generating marks for duration slider
 durations = {}
-for i in range(0, int(df['Duration'].max()), 5):
+for i in range(0, int(df['Duration'].max()), 10):
     durations[i] = str(i)
 
 ## 4.3. Color Map for Edges based on Duration of call (see Section 7.3.)
@@ -172,7 +172,6 @@ def plot_map(df):
 
 #Plot trace
 def plot_movement(df,selected_numbers):
-    print('Hello')
     data=[]
     colors=['#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A', '#19D3F3', '#FF6692', '#B6E880', '#FF97FF', '#FECB52']
     color_no=0
@@ -209,7 +208,6 @@ def plot_movement(df,selected_numbers):
 
         for i in range(len(locs)-1):
             all_lat,all_lon,duration_output=addEdgemap(locs[i],locs[i+1],duration_hover[i],all_lat,all_lon,duration_output, 0.7, "end",0.009, 30, 10) 
-            print(duration_output)
             data.append(go.Scattermapbox(lat=all_lat,lon=all_lon,mode = "lines",hovertext=duration_output,marker=go.scattermapbox.Marker(
                     size=17,
                     color=colors[color_no],
@@ -388,7 +386,7 @@ app.layout = html.Div(children=[
                                                                             id='duration-slider',
                                                                             min=0,
                                                                             max=df['Duration'].max(),
-                                                                            step=None,
+                                                                            step=10,
                                                                             marks=durations,
                                                                             
 
@@ -396,16 +394,16 @@ app.layout = html.Div(children=[
                                                                             dots=True,
 
                                                                         ),  # Duration Slider
-
+                                                                        html.Div([''],className='spacing'),
                                                                         dcc.Markdown(
-                                                                            '{} - {}'.format(default_duration_slider_val[0], default_duration_slider_val[1]),
+                                                                            'Showing records with durations between {} - {} minutes'.format(default_duration_slider_val[0], default_duration_slider_val[1]),
                                                                             id="duration-value"
                                                                         ),
 
                                                                         html.H5(
                                                                             'Select Time of Day:'
                                                                             ),
-
+                                                                        html.Div([''],className='spacing'),
                                                                         dcc.RangeSlider(
                                                                             id='time-slider',
                                                                             min=0,
@@ -417,11 +415,8 @@ app.layout = html.Div(children=[
                                                                             pushable=1
 
                                                                         ),  # Time Slider
-
-                                                                        html.H5(
-                                                                            ''
-                                                                        ),# Doesn't let the 'Condition for Caller/Reciever' to fall in time stamps
-
+                                                                        html.Div([''],className='largespacing'),
+  
                                                                         html.H5(
                                                                             'Condition for Caller/Reciever'
                                                                         ),
@@ -483,8 +478,8 @@ app.layout = html.Div(children=[
                                                                         html.H5(
                                                                             ''
                                                                         ),# For visual clarity
-
-                                                                        html.Button('Reset Filters', id='reset-button', n_clicks=0)
+                                                                        html.Div([dbc.Button('Reset',color='danger',size="lg", id='reset-button', className='buttons',n_clicks=0)])
+                                                                        
                                                                      ],
                                                                      id='filters',lg=3,),  # Filters
 
@@ -574,9 +569,8 @@ app.layout = html.Div(children=[
                                                                                     """),
 
                                                                                     html.Div(children=[
-                                                                                                         html.Div([
-                                                                                                        html.Button('Toggle to vizualize Components', id='toggle-components', n_clicks=0),
-                                                                                                                  ]),
+                                                                                                        html.Div([dbc.Button('Toggle',color='success',size="lg", id='toggle-components',className='buttons',n_clicks=0)],style={'textAlign':'center'}),
+                                                                                                        
 
                                                                                                           html.Pre(id='selected-data', ),
                                                                                                       ])  
@@ -684,18 +678,15 @@ def display_hover_data(hoverData, filtered_data,hoverDataMap):
         hd += "Most Calls to: " + str(z[0]) + "\n"
         hd += "Most Calls from: " + str(z[1]) + "\n"
         hd += "Most Calls: " + str(z[2]) + "\n"
-        print(hoverDataMap)
         return hd
         
     if hoverDataMap is not None:
     
         cur_lat,cur_lon=hoverDataMap['points'][0]['lat'],hoverDataMap['points'][0]['lon']
-        print(cur_lat,cur_lon)
         req_json = requests.get('https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&zoom=18&addressdetails=1'.format(
                 lat=cur_lat, lon=cur_lon)).json()
         add_string = ""
         add_string +=" ,".join(req_json['address'].values())
-        print(add_string)
         return add_string
     return "Hover data..."
 
