@@ -176,8 +176,10 @@ def plot_map(filtered_df):
                 lon=77.4126
             ),
             pitch=0,
-            zoom=10
-        )}
+            zoom=10,
+             
+        )},
+       
         
     )
     fig.update_layout(clickmode='event+select') 
@@ -345,8 +347,8 @@ def plot_network(df, srs, scs):
           #Hover-info design.
     )
     fig.update_layout(clickmode='event+select')  # Event method
-    fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1), plot_bgcolor='rgb(255,255,255)')
-    fig.update_layout(height=500)
+    fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1))
+    fig.update_layout(height=500,plot_bgcolor='rgb(50,0,0)')
     return fig
 
 # store layout (after app.layout) in file and try to import that
@@ -575,7 +577,7 @@ def display_selected_data(selectedData, filtered_data):
         l = []
         for point in selectedData['points']:
                 l.append(node_to_num[coords_to_node[point['x'], point['y']]])
-        components = bfs(l, df)
+        components = bfs(l, df[df['Receiver']!=20000])
         s = ""
         i = 1
         for component in components:

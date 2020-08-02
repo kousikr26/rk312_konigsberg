@@ -45,6 +45,7 @@ final_ipdr_columns = ["App_name","Total Volume","Date","Time","Duration","Privat
 
 
 dash_layout = html.Div(children=[
+    html.Div(id='bg-image'),
                                 html.Div(children=[
 				                                    html.Img(
 				                                        src='assets/filter.png',width='20px',id='collapse-filters', style={'cursor':'pointer'}
@@ -91,7 +92,7 @@ dash_layout = html.Div(children=[
                                                     html.H1('CDR Analyser'),],id='header-title'), # TITLE BOLDED, for more 'oompf'.
                                                     html.Br(),
                                                     html.Div([
-                                                    html.I('Welcome back officer, You can analyse the phone calls and internet activity of people'),  # Subtitle
+                                                    # html.I('Welcome back officer, You can analyse the phone calls and internet activity of people'),  # Subtitle
                                                   
                                                     html.H4(id='message')],id='header-subtitle'),  # Message
                                                   ],id='header-text'),
