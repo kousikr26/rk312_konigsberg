@@ -352,8 +352,19 @@ app.layout = html.Div(children=[
                                         src='assets/filter.png',width='20px',id='collapse-filters'
                                     ),
                                     html.Img(
-                                        src='assets/file-upload.png',width='20px'
+                                        src='assets/reset.png',width='20px',id='reset-button',n_clicks=0
                                     ),
+                                     dcc.Upload(
+                                                                                        id='upload-data',
+                                                                                        children=html.Img(src='assets/file-upload.png',
+                                                                                        width='20px'),
+                                                                                        
+                                                                                        # Allow multiple files to be uploaded
+                                                                                        multiple=False
+                                                                                    ),
+                                     html.Div(id='output-data-upload'),
+                                   
+                                    
                                 ],id='sidebar'),
                                 html.Div(children=[ 
                                                     html.Div([
@@ -506,22 +517,12 @@ app.layout = html.Div(children=[
                                                                        
                                                                         
                                                                         html.Div([
-                                                                                    dcc.Upload(
-                                                                                        id='upload-data',
-                                                                                        children=html.Div([
-                                                                                            'Drag and Drop or ',
-                                                                                            html.A('External File')
-                                                                                        ]),
-                                                                                        
-                                                                                        # Allow multiple files to be uploaded
-                                                                                        multiple=False
-                                                                                    ),
-                                                                                    html.Div(id='output-data-upload'),
+                                                                                   
                                                                                  ]),
                                                                         html.H5(
                                                                             ''
                                                                         ),# For visual clarity
-                                                                        html.Div([dbc.Button('Reset',size="lg", id='reset-button', className='buttons',n_clicks=0)])
+                                                                        
                                                                         
                                                                      ],
                                                                      id='filters',lg=2,),  # Filters
@@ -535,17 +536,18 @@ app.layout = html.Div(children=[
                                                                         html.H3('Network Plot '),
                                                                        daq.ToggleSwitch(id='toggle-network-map',value=False, size=40),
                                                                        html.H3('Map Plot')],id='plot-header'),
-                                                                        html.Div([dcc.Graph(
+                                                                        html.Div([
+                                                                        html.Div([
+                                                                        dcc.Graph(
                                                                             id='network-plot'
 
-                                                                        ),
-                                                                                                                                           
+                                                                        ), 
                                                                         html.H5('The size of the dots and the width of the edges denote the total duration of the caller/receiver'),
                                                                         dcc.Markdown("""
                                                                         x -> Selected Caller
                                                                                 Diamond Cross -> Selected Receiver
                                                                                 o -> Other
-                                                                                """),
+                                                                                """),] ,id='network-plot-div'),
                                                                         html.Div(children=[
                                                                         html.H3('Movement'),
                                                                        daq.ToggleSwitch(id='toggle-movement-time',value=False, size=40),
@@ -567,7 +569,7 @@ app.layout = html.Div(children=[
                                                                                                      Mouse over nodes in the graph to get statistics.
                                                                                                 """),
                                                                                     html.Pre(id='hover-data',)
-                                                                                ]),  # Hover Data Container
+                                                                                ],id='hover-data-div'),  # Hover Data Container
 
                                                                       html.Div([
                                                                             html.H3('Click:'),

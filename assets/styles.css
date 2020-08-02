@@ -23,7 +23,7 @@ h5.h6,p,pre{
     font-weight: 200;
 }
 pre {
-    border: thin lightgrey solid;
+    /* border: thin lightgrey solid; */
     overflow-x: scroll;
     font-family: 'Montserrat';
 }
@@ -94,7 +94,7 @@ margin-left: 4%;
     border-radius: 5px;
     text-align: center;
     margin-bottom:12px;
-    margin-top:12px
+    margin-top:36em;
 }
 #toggle-components{
     width: 40%;
@@ -166,13 +166,21 @@ margin-bottom:60px;
     position: fixed; /* Fixed Sidebar (stay in place on scroll) */
   z-index: 1; 
 }
-#sidebar>img:nth-child(1){
+#sidebar >img:nth-child(1){
     margin-top: 16em;
+    margin-left: 10%;
 
 }
-#sidebar>img:nth-child(2){
-    margin-top: 36em;
-
+#sidebar >img:nth-child(2){
+    margin-top: 20em;
+    margin-left: 10%;
+}
+#network-plot-div{
+    border:1px black solid;
+    padding:2px;
+    border-radius: 2%;
+    box-shadow: -5px 5px black;
+    margin-bottom: 10px;
 }
 #header-title{
     display: inline-flex;
