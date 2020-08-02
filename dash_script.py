@@ -1,4 +1,4 @@
-########################################################### Import Libraries ###################################################
+ ########################################################### Import Libraries ###################################################
 import pandas as pd
 import base64
 import io
@@ -348,24 +348,42 @@ def plot_network(df, srs, scs):
 # NOTE : All the elements here (visual or statistical) are updated through callbacks as defined in section 9
 app.layout = html.Div(children=[
                                 html.Div(children=[
-                                    html.Img(
-                                        src='assets/filter.png',width='20px',id='collapse-filters'
-                                    ),
-                                    html.Img(
-                                        src='assets/reset.png',width='20px',id='reset-button',n_clicks=0
-                                    ),
-                                     dcc.Upload(
-                                                                                        id='upload-data',
-                                                                                        children=html.Img(src='assets/file-upload.png',
-                                                                                        width='20px'),
-                                                                                        
-                                                                                        # Allow multiple files to be uploaded
-                                                                                        multiple=False
-                                                                                    ),
-                                     html.Div(id='output-data-upload'),
-                                   
+				                                    html.Img(
+				                                        src='assets/filter.png',width='20px',id='collapse-filters', style={'cursor':'pointer'}
+				                                    ),
+				                                    html.Img(
+				                                        src='assets/reset.png',width='20px',id='reset-button',n_clicks=0, style={'cursor':'pointer'}
+				                                    ),
+				                                   	dcc.Upload(
+				                                                                                        id='upload-data',
+				                                                                                        children=html.Img(src='assets/file-upload.png',
+				                                                                                        width='20px'),
+				                                                                                        
+				                                                                                        # Allow multiple files to be uploaded
+				                                                                                        multiple=False
+				                                                                                    ),
+				                                     html.Div(id='output-data-upload'),
+
+				                                     dbc.Tooltip(
+													            "Click to toggle Filters",
+													            target="collapse-filters",
+													            placement = 'right'
+													        ),
+
+				                                     dbc.Tooltip(
+													            "Click to Reset filter values",
+													            target='reset-button',
+													            placement = 'right'
+													        ),
+
+				                                     dbc.Tooltip(
+				                                     		"Click to upload the database in .csv format",
+				                                     		target='upload-data',
+				                                     		placement='right'
+				                                     	)
                                     
-                                ],id='sidebar'),
+                                				],id='sidebar'),
+
                                 html.Div(children=[ 
                                                     html.Div([
                                                     html.Img(src='assets/Logo.jpeg',height='50px'),
@@ -386,6 +404,7 @@ app.layout = html.Div(children=[
                                                                          html.H5(
                                                                             'Condition for Caller/Reciever:'
                                                                         ),
+
                                                                         dcc.Dropdown(
                                                                             id='select-caller-receiver',
                                                                             options=[{'label': 'Only Caller', 'value': 1}]+[{'label': 'Only Receiver', 'value': 2}]+[
@@ -393,6 +412,12 @@ app.layout = html.Div(children=[
                                                                             value=3,
                                                                         ),  # Select if you want the select the numbers to be from Caller/Reciever/Both/Either
                                                                     
+                                                                        dbc.Tooltip(
+																            "Filter the person on the basis of type of call",
+																            target='select-caller-receiver',
+																            placement = 'right'
+																        ),
+
                                                                         html.H5(
                                                                             ''
                                                                         ),# For visual clarity
@@ -408,6 +433,12 @@ app.layout = html.Div(children=[
                                                                             multi=True,
                                                                         ),  # Dropdown for Caller
 
+                                                                        dbc.Tooltip(
+																            "Select the numbers to display whom they called",
+																            target='caller-dropdown',
+																            placement = 'right'
+																        ),
+
                                                                         html.H5(
                                                                             ''
                                                                         ),# For visual clarity
@@ -422,6 +453,12 @@ app.layout = html.Div(children=[
                                                                             value='None',
                                                                             multi=True,
                                                                         ),  # Dropdown for Reciever,
+
+                                                                        dbc.Tooltip(
+																            "Select the numbers to display whom they were called by",
+																            target= 'receiver-dropdown',
+																            placement = 'right'
+																        ),
                                                                         
                                                                         html.H5(
                                                                             ''
@@ -442,6 +479,13 @@ app.layout = html.Div(children=[
                                                                                 display_format='DD-MMM-YY'
                                                                             )],  # Data Picker
                                                                             ),
+
+                                                                        dbc.Tooltip(
+																            "Start Date",
+																            target= 'date-picker1',
+																            placement = 'right'
+																        ),
+
                                                                         html.Div([
                                                                              html.H5(
                                                                             'To:'
@@ -455,6 +499,11 @@ app.layout = html.Div(children=[
                                                                             display_format='DD-MMM-YY'
                                                                         ),])],id='from-to-box'),  # Data Picker
                                                                       
+                                                                      	dbc.Tooltip(
+																            "End Date",
+																            target= 'date-picker2',
+																            placement = 'right'
+																        ),
 
                                                                         html.H5(
                                                                             'Duration :'
@@ -472,6 +521,14 @@ app.layout = html.Div(children=[
                                                                             dots=True,
 
                                                                         ),  # Duration Slider
+
+                                                                        dbc.Tooltip(
+																            "Filter on Call Length",
+																            target= 'duration-slider',
+																            placement = 'right'
+																        ),
+
+
                                                                         html.Div([''],className='spacing'),
                                                                         dcc.Markdown(
                                                                             'Showing records with durations between {} - {} minutes'.format(default_duration_slider_val[0], default_duration_slider_val[1]),
@@ -493,6 +550,14 @@ app.layout = html.Div(children=[
                                                                             pushable=1
 
                                                                         ),  # Time Slider
+
+                                                                        dbc.Tooltip(
+																            "Filter on Time of Day",
+																            target= 'time-slider',
+																            placement = 'right'
+																        ),
+
+
                                                                         html.Div([''],className='largespacing'),
   
                                                                         html.Div([
@@ -522,7 +587,7 @@ app.layout = html.Div(children=[
                                                                         html.H5(
                                                                             ''
                                                                         ),# For visual clarity
-                                                                        
+                                                                        	
                                                                         
                                                                      ],
                                                                      id='filters',lg=2,),  # Filters
@@ -533,9 +598,24 @@ app.layout = html.Div(children=[
                                                                        
 
                                                                         html.Div(children=[
-                                                                        html.H3('Network Plot '),
+                                                                        html.H3('Network Plot ', id='Network-Plot-text'),
+                                                                        dbc.Tooltip(
+                                                                        	"The plot of all the callers and receivers as a directed graph",
+                                                                        	target='Network-Plot-text',
+                                                                        	placement='top'
+                                                                        	),
+
                                                                        daq.ToggleSwitch(id='toggle-network-map',value=False, size=40),
-                                                                       html.H3('Map Plot')],id='plot-header'),
+
+
+                                                                       html.H3('Map Plot', id = 'Map-Plot-text')],id='plot-header'),
+
+                                                                       dbc.Tooltip(
+																            "Plot of Tower IDs with above average traffic",
+																            target='Map-Plot-text',
+																            placement = 'top'
+																        ),
+
                                                                         html.Div([
                                                                         html.Div([
                                                                         dcc.Graph(
@@ -549,9 +629,21 @@ app.layout = html.Div(children=[
                                                                                 o -> Other
                                                                                 """),] ,id='network-plot-div'),
                                                                         html.Div(children=[
-                                                                        html.H3('Movement'),
+                                                                        html.H3('Movement', id='Movement-text'),
+                                                                        dbc.Tooltip(
+																            "Path Trace of the selected person with respect to Tower IDs",
+																            target='Movement-text',
+																            placement = 'left'
+																        ),
+
                                                                        daq.ToggleSwitch(id='toggle-movement-time',value=False, size=40),
-                                                                       html.H3('Time Series')],id='toggle-mov-div'),
+                                                                       html.H3('Time Series', id='Time-Series-text')],id='toggle-mov-div'),
+                                                                       dbc.Tooltip(
+																            "Call Duration over time of the selected person",
+																            target='Time-Series-text',
+																            placement = 'right'
+																        ),
+
                                                                         dcc.Graph(id='movement-plot'),
                                                                         dcc.Graph(id='duration-plot')],id='network-view'),
                                                                          dcc.Graph(
