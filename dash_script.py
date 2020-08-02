@@ -339,7 +339,7 @@ def plot_network(df, srs, scs):
 app.layout = html.Div(children=[
 
                                 html.Div(children=[
-                                                    html.H1(children='CDR Analyser'),  # Title
+                                                    dcc.Markdown('# **CDR Analyser**'), # TITLE BOLDED, for more 'oompf'.
                                                     html.H3(children='''
                                                     Analyse the phone calls between people.
                                                 '''),  # Subtitle
@@ -354,9 +354,7 @@ app.layout = html.Div(children=[
                                 dbc.Row(children=[
 
                                                     dbc.Col(children=[
-                                                                        html.H3(
-                                                                            'Filters'
-                                                                        ),
+                                                                        dcc.Markdown("# Filters"),
                                                                         html.H5(
                                                                             'From:'
                                                                         ),
@@ -390,6 +388,7 @@ app.layout = html.Div(children=[
                                                                             max=df['Duration'].max(),
                                                                             step=10,
                                                                             marks=durations,
+                                                                            
 
                                                                             value=default_duration_slider_val,
                                                                             dots=True,
@@ -517,7 +516,7 @@ app.layout = html.Div(children=[
 
 
                                                     dbc.Col(children=[
-                                                                        html.H3('Statistics'),
+                                                                        dcc.Markdown('# Statistics'),
                                                                         html.Div([
                                                                                     dcc.Markdown("""
                                                                                                     **Hover To Get Stats** \n
@@ -538,13 +537,29 @@ app.layout = html.Div(children=[
                                                                             ),
 
                                                                             html.Pre(id='click-data', ),
+
+                                                                            dcc.Markdown(
+                                                                            	"#### Usage Statistics of various Apps"
+                                                                            	),
+
                                                                             dcc.Graph(
                                                                                 id='pie-chart'
                                                                             ),
-                                                                            
-                                                                            html.Pre(id='click-data-ipdr', )
 
-                                                                        ], ),  # Click Data Container
+                                                                            dcc.Markdown(
+                                                                            		"**App usage of the person selected**"
+                                                                            	),
+
+                                                                            html.Pre(id='click-data-ipdr', ),
+
+                                                                            dcc.Markdown(
+                                                                            		"**The information of all the other persons who were using the same App during the constraints selected**"
+                                                                            	),
+
+                                                                            html.Pre(id='click-data-ipdr-piechart')
+
+
+                                                                        ]),  # Click Data Container
                                                       
 
                                                                         html.Div([
@@ -679,8 +694,8 @@ def display_hover_data(hoverData, filtered_data,hoverDataMap):
 
 ## 9.3. TO UPDATE THE DURATION PLOT AND IPDR USAGE PIE-CHART FOR A NODE.
 @app.callback(
-    [Output('display-selected-num','children'),Output('click-data', 'children'), Output('pie-chart','figure'),Output('click-data-ipdr', 'children'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
-    [Input('network-plot', 'clickData'),Input(component_id='filtered-data', component_property='children')])
+    [Output('display-selected-num','children'),Output('click-data', 'children'), Output('pie-chart','figure'), Output('click-data-ipdr', 'children'), Output('duration-plot','figure')], #Suggest to put all extra plots in this callback's output...
+    [Input('network-plot', 'clickData'), Input(component_id='filtered-data', component_property='children')])
 def display_click_data(clickData,filtered_data):
     emptyPlot= go.Figure()
     emptyPlot.update_layout(
@@ -715,7 +730,23 @@ def display_click_data(clickData,filtered_data):
         new_df_ipdr=new_df_ipdr[new_df_ipdr['App_name'].notna()]
 
         return str(x),new_df.to_string(index=False), fig,new_df_ipdr.to_string(index=False), plot_Duration(new_df)
-    return 'None',"Click on a node to view more data",go.Figure(),"Click on a node to view more data", go.Figure() #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+    return 'None',"Click on a node to view more data",go.Figure(),"Click on a node to view more data" , go.Figure() #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+
+
+
+@app.callback(
+	[Output('click-data-ipdr-piechart', 'children')],
+	[Input('pie-chart', 'clickData'), Input('filtered-data', 'children')]
+	)
+def update_ipdr_simult_users(clickData, filtered_data):
+
+	if clickData is not None:
+
+		df = pd.read_json(filtered_data, orient='split')
+		new_df = df[df['App_name'] == clickData['points'][0]['label']].drop(['Unnamed: 0', 'Dura_color', 'Caller_node', 'Receiver_node'], axis=1)
+
+		return new_df.to_string(index=False),
+	return "Click on a field in pie-chart to see data",
 
 
 
