@@ -20,7 +20,7 @@ import dash_bootstrap_components as dbc
 import math
 import matplotlib
 import requests
-
+import dash_draggable
 from math import radians, sin, sqrt, cos, atan2
 ########################################################## Import functions for Breadth First Search ##########################
 from addEdge import addEdge,addEdgemap
@@ -372,7 +372,7 @@ app.layout = html.Div(children=[
                                                     html.H1('CDR Analyser'),],id='header-title'), # TITLE BOLDED, for more 'oompf'.
                                                     html.Br(),
                                                     html.Div([
-                                                    html.I('Hello Officer, You can analyse the phone calls and internet activity of people'),  # Subtitle
+                                                    html.I('Welcome back officer, You can analyse the phone calls and internet activity of people'),  # Subtitle
                                                   
                                                     html.H4(id='message')],id='header-subtitle'),  # Message
                                                   ],id='header-text'),
@@ -381,6 +381,18 @@ app.layout = html.Div(children=[
 
                                 dbc.Row(children=[
 
+                                              dash_draggable.dash_draggable(
+                                                                                    id='draggable-filters',
+                                                                                    axis='both',
+                                                                                    handle='.handle',
+                                                                                    defaultPosition={'x': 0, 'y': 2},
+                                                                                    position=None,
+                                                                                    grid=[25, 25],
+                                                                                    children=[
+                                                                                        html.Div(
+                                                                                            id='draggable-filters-div',
+                                                                                            className='handle',
+                                                                                            children=[
                                                     dbc.Col(children=[
                                                                         dcc.Markdown("# Filters"),
                                                                          html.H5(
@@ -525,18 +537,55 @@ app.layout = html.Div(children=[
                                                                         
                                                                         
                                                                      ],
-                                                                     id='filters',lg=2,),  # Filters
-
-
+                                                                     id='filters',lg=2,)
+                                                                     ])]),  # Filters
+                                                                     dash_draggable.dash_draggable(
+                                                                                    id='draggable-plot-area',
+                                                                                    axis='both',
+                                                                                    handle='.handle',
+                                                                                    defaultPosition={'x': 0, 'y': 2},
+                                                                                    position=None,
+                                                                                    grid=[25, 25],
+                                                                                    children=[
+                                                                                        html.Div(
+                                                                                            id='draggable-plot-area-div',
+                                                                                            className='handle',
+                                                                                            children=[
 
                                                     dbc.Col(children=[
                                                                        
-
+                                                                    dash_draggable.dash_draggable(
+                                                                                    id='draggable-toggle-plot',
+                                                                                    axis='both',
+                                                                                    handle='.handle',
+                                                                                    defaultPosition={'x': 0, 'y': 2},
+                                                                                    position=None,
+                                                                                    grid=[25, 25],
+                                                                                    children=[
+                                                                                        html.Div(
+                                                                                            id='draggable-toggle-div',
+                                                                                            className='handle',
+                                                                                            children=[
                                                                         html.Div(children=[
                                                                         html.H3('Network Plot '),
                                                                        daq.ToggleSwitch(id='toggle-network-map',value=False, size=40),
-                                                                       html.H3('Map Plot')],id='plot-header'),
+                                                                       html.H3('Map Plot')],id='plot-header')])]),
                                                                         html.Div([
+
+                                                                             html.Div(
+                                                                              
+                                                                                children=dash_draggable.dash_draggable(
+                                                                                    id='draggable-network',
+                                                                                    axis='both',
+                                                                                    handle='.handle',
+                                                                                    defaultPosition={'x': 0, 'y': 2},
+                                                                                    position=None,
+                                                                                    grid=[25, 25],
+                                                                                    children=[
+                                                                                        html.Div(
+                                                                                            id='draggable-network-div',
+                                                                                            className='handle',
+                                                                                            children=[
                                                                         html.Div([
                                                                         dcc.Graph(
                                                                             id='network-plot'
@@ -548,19 +597,64 @@ app.layout = html.Div(children=[
                                                                                 Diamond Cross -> Selected Receiver
                                                                                 o -> Other
                                                                                 """),] ,id='network-plot-div'),
+                                                                                            ])])),
+                                                                        ###### 
+
+                                                                      
+                                                                        dash_draggable.dash_draggable(
+                                                                                    id='draggable-movement',
+                                                                                    axis='both',
+                                                                                    handle='.handle',
+                                                                                    defaultPosition={'x': 0, 'y': 2},
+                                                                                    position=None,
+                                                                                    grid=[25, 25],
+                                                                                    children=[
+                                                                                        html.Div(
+                                                                                            id='draggable-movement-div',
+                                                                                            className='handle',
+                                                                                            children=[
+                                                                        html.Div([
                                                                         html.Div(children=[
                                                                         html.H3('Movement'),
                                                                        daq.ToggleSwitch(id='toggle-movement-time',value=False, size=40),
                                                                        html.H3('Time Series')],id='toggle-mov-div'),
                                                                         dcc.Graph(id='movement-plot'),
-                                                                        dcc.Graph(id='duration-plot')],id='network-view'),
+                                                                        dcc.Graph(id='duration-plot')
+                                                                                            ], id='movement-div')
+                                                                        ])])],id='network-view'),
+                                                                      
+                                                                     dash_draggable.dash_draggable(
+                                                                                    id='draggable-map',
+                                                                                    axis='both',
+                                                                                    handle='.handle',
+                                                                                    defaultPosition={'x': 0, 'y': 2},
+                                                                                    position=None,
+                                                                                    grid=[25, 25],
+                                                                                    children=[
+                                                                                        html.Div(
+                                                                                            id='draggable-map-div',
+                                                                                            className='handle',
+                                                                                            children=[
                                                                          dcc.Graph(
                                                                             id='map-plot'
-                                                                        ),
-                                                                     ],id='plot-area',lg=6),     # Network Plot
+                                                                        )])])
 
 
-
+                                                                     ],id='plot-area',lg=12),
+                                                                     ])]),     # Network Plot
+                                                        
+                                                    dash_draggable.dash_draggable(
+                                                                                    id='draggable-stats',
+                                                                                    axis='both',
+                                                                                    handle='.handle',
+                                                                                    defaultPosition={'x': 0, 'y': 2},
+                                                                                    position=None,
+                                                                                    grid=[25, 25],
+                                                                                    children=[
+                                                                                        html.Div(
+                                                                                            id='draggable-stats-div',
+                                                                                            className='handle',
+                                                                                            children=[
                                                     dbc.Col(children=[
                                                                         dcc.Markdown('# Statistics'),
                                                                         html.Div([ 
@@ -620,7 +714,9 @@ app.layout = html.Div(children=[
                                                                                     """),
 
                                                                                     html.Div(children=[
-                                                                                                        html.Div([dbc.Button('Toggle',size="lg", id='toggle-components',className='buttons',n_clicks=0)],style={'textAlign':'center'}),
+                                                                                                        html.Div([dbc.Button(children=[
+                                                                                                            html.Img(src='assets/vision.png',height='24px')
+                                                                                                        ],size="lg", id='toggle-components',className='buttons',n_clicks=0)],style={'textAlign':'center'}),
                                                                                                         
 
                                                                                                           html.Pre(id='selected-data', ),
@@ -630,6 +726,7 @@ app.layout = html.Div(children=[
 
 
                                                                      ],id='stats',lg=3)
+                                                                                            ])])
 
                                                  ],className='container-mid'), # End of dbc.Row(...)
 
@@ -1019,9 +1116,9 @@ def ResetFilters(button_reset):
 )
 def Zoom(mode):
     if mode!=None and mode%2==1 :
-        return 9, {'display':'none'}
+        return 12, {'display':'none'}
     else:
-        return 6, {'display':'block'}
+        return 12, {'display':'block'}
 
 @app.callback(
     Output('radius-div', 'style'),
