@@ -18,13 +18,10 @@ from stats import *
 import pygraphviz as pgv
 import dash_bootstrap_components as dbc
 import math
-<<<<<<< HEAD
 import matplotlib
 import requests
 
-=======
 from math import radians, sin, sqrt, cos, atan2
->>>>>>> klexis-dev
 ########################################################## Import functions for Breadth First Search ##########################
 from addEdge import addEdge,addEdgemap
 from BFSN import bfs
@@ -147,10 +144,10 @@ fig = go.Figure() # Defining the main figure
 pos = {}
 
 ## 7.1. Returns the figure for geographical map from input Dataframe.
-def plot_map(df):
+def plot_map(filtered_df):
 
-    df=pd.merge(df,towers[['lat','lon','TowerID']],on='TowerID')
-    towers_deviation=df.groupby(['TowerID'])[['Duration']].apply(lambda x : (x.mean()-tower_mean[x.name])/tower_std[x.name] ).reset_index()
+    new_df=pd.merge(filtered_df,towers[['lat','lon','TowerID']],on='TowerID')
+    towers_deviation=new_df.groupby(['TowerID'])[['Duration']].apply(lambda x : (x.mean()-tower_mean[x.name])/tower_std[x.name] ).reset_index()
     towers_deviation['Duration']=towers_deviation['Duration'].apply(lambda x : max(x,0))
     node_x=towers_deviation['TowerID'].apply(lambda x : towers[towers['TowerID']==x]['lat'].unique()[0])
     node_y=towers_deviation['TowerID'].apply(lambda x : towers[towers['TowerID']==x]['lon'].unique()[0])
@@ -158,6 +155,7 @@ def plot_map(df):
     fig=go.Figure(people,layout={
         'mapbox_style':'open-street-map',
         'margin': dict(l = 0, r = 0, t = 0, b = 0),
+        'height':500,
         'mapbox':dict(
         
             bearing=0,
@@ -222,7 +220,8 @@ def plot_movement(df,selected_numbers):
         color_no%=len(colors)
     fig=go.Figure(data,layout={
         'mapbox_style':'open-street-map',
-        
+        'showlegend':False,
+        'margin': dict(l = 0, r = 0, t = 0, b = 0),
         'mapbox':dict(
         
             bearing=0,
@@ -315,7 +314,7 @@ def plot_network(df, srs, scs):
                  
 
                     hovermode='closest',
-                    margin=dict(b=20, l=5, r=5, t=40),
+                    margin=dict(b=20, l=5, r=5, t=20),
                     annotations=[dict(
                         showarrow=True,
                         xref="paper", yref="paper",
@@ -327,7 +326,8 @@ def plot_network(df, srs, scs):
     fig.update_layout(transition_duration=500)  # Transition animation dynamics.
 
     fig.update_layout(
-         hoverlabel = dict(bgcolor='white',font_size = 15,font_family = 'Rockwell')  #Hover-info design.
+         hoverlabel = dict(bgcolor='white',font_size = 15,font_family = 'Rockwell'),
+         width=700  #Hover-info design.
     )
     fig.update_layout(clickmode='event+select')  # Event method
     fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1), plot_bgcolor='rgb(255,255,255)')
@@ -342,15 +342,15 @@ def plot_network(df, srs, scs):
 # NOTE : All the elements here (visual or statistical) are updated through callbacks as defined in section 9
 app.layout = html.Div(children=[
 
-                                html.Div(children=[
-                                                    dcc.Markdown('# **CDR Analyser**'), # TITLE BOLDED, for more 'oompf'.
-                                                    html.H3(children='''
-                                                    Analyse the phone calls between people.
-                                                '''),  # Subtitle
-                                                    html.Div(
-                                                        id='date-selected'
-                                                    ),  # Date Selected Indicator
-                                                    html.H4(id='message'),  # Message
+                                html.Div(children=[ 
+                                                    html.Div([
+                                                    html.Img(src='assets/Logo.jpeg',height='50px'),
+                                                    html.H1('CDR Analyser'),],id='header-title'), # TITLE BOLDED, for more 'oompf'.
+                                                    html.Br(),
+                                                    html.Div([
+                                                    html.I('Hello Officer, You can analyse the phone calls and internet activity of people'),  # Subtitle
+                                                  
+                                                    html.H4(id='message')],id='header-subtitle'),  # Message
                                                   ],id='header-text'),
 
 
@@ -359,10 +359,14 @@ app.layout = html.Div(children=[
 
                                                     dbc.Col(children=[
                                                                         dcc.Markdown("# Filters"),
-                                                                        html.H5(
-                                                                            'From:  To:'
-                                                                        ),
                                                                         html.Div([
+                                                                        
+                                                                       ],id='from-to'),
+                                                                        html.Div([
+                                                                        html.Div([html.H5(
+                                                                            'From:'
+
+                                                                        ),
                                                                             dcc.DatePickerSingle(
                                                                                 id='date-picker1',
                                                                                 min_date_allowed=df['Date'].min(),
@@ -371,8 +375,11 @@ app.layout = html.Div(children=[
                                                                                 date=str(dt(2020, 6, 17, 0, 0, 0)),
                                                                                 display_format='DD-MMM-YY'
                                                                             )],  # Data Picker
-                                                                            style={'width': '49%', 'display': 'inline-block'}),
+                                                                            ),
                                                                         html.Div([
+                                                                             html.H5(
+                                                                            'To:'
+                                                                        ),
                                                                         dcc.DatePickerSingle(
                                                                             id='date-picker2',
                                                                             min_date_allowed=df['Date'].min(),
@@ -380,10 +387,11 @@ app.layout = html.Div(children=[
                                                                             initial_visible_month=dt(2020, 6, 5),
                                                                             date=str(dt(2020, 6, 17, 0, 0, 0)),
                                                                             display_format='DD-MMM-YY'
-                                                                        ),
+                                                                        ),])],id='from-to-box'),  # Data Picker
+                                                                      
 
                                                                         html.H5(
-                                                                            'Select Duration :'
+                                                                            'Duration :'
                                                                             ),
 
                                                                         dcc.RangeSlider(
@@ -405,7 +413,7 @@ app.layout = html.Div(children=[
                                                                         ),
 
                                                                         html.H5(
-                                                                            'Select Time of Day:'
+                                                                            'Time of Day:'
                                                                             ),
                                                                         html.Div([''],className='spacing'),
                                                                         dcc.RangeSlider(
@@ -455,7 +463,7 @@ app.layout = html.Div(children=[
                                                                         ),# For visual clarity
 
                                                                         html.H5(
-                                                                            'Select Caller:'
+                                                                            'Caller:'
                                                                         ),
                                                                         dcc.Dropdown(
                                                                             id='caller-dropdown',
@@ -470,7 +478,7 @@ app.layout = html.Div(children=[
                                                                         ),# For visual clarity
 
                                                                         html.H5(
-                                                                            'Select Reciever:'
+                                                                            'Reciever:'
                                                                         ),
                                                                         dcc.Dropdown(
                                                                             id='receiver-dropdown',
@@ -490,7 +498,7 @@ app.layout = html.Div(children=[
                                                                                         id='upload-data',
                                                                                         children=html.Div([
                                                                                             'Drag and Drop or ',
-                                                                                            html.A('Select a File')
+                                                                                            html.A('External File')
                                                                                         ]),
                                                                                         
                                                                                         # Allow multiple files to be uploaded
@@ -501,7 +509,7 @@ app.layout = html.Div(children=[
                                                                         html.H5(
                                                                             ''
                                                                         ),# For visual clarity
-                                                                        html.Div([dbc.Button('Reset',color='danger',size="lg", id='reset-button', className='buttons',n_clicks=0)])
+                                                                        html.Div([dbc.Button('Reset',size="lg", id='reset-button', className='buttons',n_clicks=0)])
                                                                         
                                                                      ],
                                                                      id='filters',lg=3,),  # Filters
@@ -518,49 +526,58 @@ app.layout = html.Div(children=[
                                                                         html.H3('Network Plot '),
                                                                        daq.ToggleSwitch(id='toggle-network-map',value=False, size=40),
                                                                        html.H3('Map Plot')],id='plot-header'),
-                                                                        dcc.Graph(
+                                                                        html.Div([dcc.Graph(
                                                                             id='network-plot'
 
                                                                         ),
-                                                                        dcc.Graph(id='movement-plot'),
-                                                                        
+                                                                                                                                           
                                                                         html.H5('The size of the dots and the width of the edges denote the total duration of the caller/receiver'),
                                                                         dcc.Markdown("""
                                                                         x -> Selected Caller
                                                                                 Diamond Cross -> Selected Receiver
                                                                                 o -> Other
                                                                                 """),
-                                                                        dcc.Graph(
+                                                                        html.Div(children=[
+                                                                        html.H3('Movement'),
+                                                                       daq.ToggleSwitch(id='toggle-movement-time',value=False, size=40),
+                                                                       html.H3('Time Series')],id='toggle-mov-div'),
+                                                                        dcc.Graph(id='movement-plot'),
+                                                                        dcc.Graph(id='duration-plot')],id='network-view'),
+                                                                         dcc.Graph(
                                                                             id='map-plot'
                                                                         ),
-                                                                        dcc.Graph(id='duration-plot'),
                                                                      ],id='plot-area',lg=6),     # Network Plot
 
 
 
                                                     dbc.Col(children=[
                                                                         dcc.Markdown('# Statistics'),
-                                                                        html.Div([
+                                                                        html.Div([ 
+                                                                            html.H3('Hover:'),
                                                                                     dcc.Markdown("""
-                                                                                                    **Hover To Get Stats** \n
-                                                                                                    Mouse over nodes in the graph to get statistics.
+                                                                                                     Mouse over nodes in the graph to get statistics.
                                                                                                 """),
                                                                                     html.Pre(id='hover-data',)
                                                                                 ]),  # Hover Data Container
 
                                                                       html.Div([
-                                                                            
+                                                                            html.H3('Click:'),
                                                                             dcc.Markdown("""
                                                                             **Click to get CDR and IPDR for a number** \n
-                                                                            Click on points in the graph to get the call data records.\n\n
+                                                                            
                                                                             Selected number:
                                                                         """),
                                                                             html.Div(
                                                                                 id="display-selected-num"
                                                                             ),
-
+                                                                             html.Div(children=[
+                                                                        html.H3('Calls '),
+                                                                       daq.ToggleSwitch(id='toggle-cdr-ipdr',value=False, size=40),
+                                                                       html.H3('Internet')],id='switch-cdr-ipdr'),
+                                                                            html.Div([
                                                                             html.Pre(id='click-data', ),
-
+                                                                            ],id='click-data-cdr'),
+                                                                            html.Div([
                                                                             dcc.Markdown(
                                                                             	"#### Usage Statistics of various Apps"
                                                                             	),
@@ -579,20 +596,20 @@ app.layout = html.Div(children=[
                                                                             		"**The information of all the other persons who were using the same App during the constraints selected**"
                                                                             	),
 
-                                                                            html.Pre(id='click-data-ipdr-piechart')
+                                                                            html.Pre(id='click-data-ipdr-piechart')],id='click-data-ipdr-div')
 
 
                                                                         ]),  # Click Data Container
                                                       
 
                                                                         html.Div([
+                                                                            html.H3('Select'),
                                                                                     dcc.Markdown("""
-                                                                                        **Select to see connected people** \n
                                                                                         Select using rectangle/lasso or by using your mouse.(Use Shift for multiple selections)
                                                                                     """),
 
                                                                                     html.Div(children=[
-                                                                                                        html.Div([dbc.Button('Toggle',color='success',size="lg", id='toggle-components',className='buttons',n_clicks=0)],style={'textAlign':'center'}),
+                                                                                                        html.Div([dbc.Button('Toggle',size="lg", id='toggle-components',className='buttons',n_clicks=0)],style={'textAlign':'center'}),
                                                                                                         
 
                                                                                                           html.Pre(id='selected-data', ),
@@ -758,7 +775,9 @@ def display_click_data(clickData,filtered_data):
             showarrow=False
 
         )
-    ]
+    ],
+    margin= dict(l = 0, r = 0, t = 0, b = 0),
+    height=200,
 )
     df = pd.read_json(filtered_data, orient='split')
     if clickData is not None and 'marker.size' in clickData['points'][0]:
@@ -768,17 +787,22 @@ def display_click_data(clickData,filtered_data):
     
         fig = go.Figure(data=dict(type='pie',values=groups,labels=groups.index))
         fig.update_layout(showlegend=False)
+        fig.update_layout(margin= dict(l = 0, r = 0, t = 0, b = 0),height=200)
   
         # Filtering DF
         new_df = df[((df['Receiver_node'] !=-1)&(df['Caller_node'] == nodeNumber) | (df['Receiver_node'] == nodeNumber))][data_columns]
         
-        x=df[(df['Caller_node'] == nodeNumber)]['Caller'].unique()[0]
+        x=df[(df['Caller_node'] == nodeNumber)]['Caller'].unique()
+        if x.shape[0]>0:
+            x=x[0]
+        else: 
+            x='No Points'
         new_df_ipdr = df[(df['Caller_node'] == nodeNumber)][data_columns_ipdr]
 
         new_df_ipdr=new_df_ipdr[new_df_ipdr['App_name'].notna()]
 
         return str(x),new_df.to_string(index=False), fig,new_df_ipdr.to_string(index=False), plot_Duration(new_df)
-    return 'None',"Click on a node to view more data",go.Figure(),"Click on a node to view more data" , go.Figure() #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
+    return 'None',"Click on points in the graph to get the call data records.\n\n",emptyPlot,"Click on points in the graph to get the internet data records.\n\n" , emptyPlot #DO NOT RETURN HERE 'None', otherwise duration-plot will always be empty.
 
 
 
@@ -807,7 +831,8 @@ def plot_Duration(new_df):
         y = new_df["Duration"]
         fig = go.Figure([ go.Bar(x = x, y = y,
                               
-                                name='duration-plot') ])  
+                                name='duration-plot') ]) 
+        fig.update_layout(margin= dict(l = 0, r = 0, t = 0, b = 0),height=400) 
         return fig
     else:
         return None
@@ -838,7 +863,7 @@ def display_selected_data(selectedData, filtered_data):
                 s += "\t" + str(number) + "\n"
         return s,plot_movement(df,l)
 
-    return json.dumps(selectedData, indent=2),go.Figure()
+    return json.dumps(selectedData, indent=2),go.Figure(layout=dict(margin= dict(l = 0, r = 0, t = 0, b = 0)))
 
 
 
@@ -890,7 +915,7 @@ def update_network_plot_caller(n_clicks,filtered_data, srs, scs):
     #     return fig
     fig = plot_network(pd.read_json(filtered_data, orient='split'), srs, scs)
     if n_clicks!= None and n_clicks%2==1:
-        fig.update_layout(height=850, width=1000)
+        fig.update_layout(height=500, width=1000)
     
     return fig
 
@@ -910,7 +935,7 @@ def update_map_plot_callback(filtered_data):
 
 ## 9.8. TO TOGGLE BETWEEN MAP OR NETWORK PLOT
 @app.callback(
-    [Output(component_id='network-plot',component_property='style'),Output(component_id='map-plot',component_property='style')],
+    [Output(component_id='network-view',component_property='style'),Output(component_id='map-plot',component_property='style')],
     [Input(component_id='toggle-network-map',component_property='value')]
 )
 def toggle_network_map(toggle):
@@ -919,8 +944,25 @@ def toggle_network_map(toggle):
     else:
         return {'display': 'block'},{'display':'none'}
 
-
-
+## 9.0. TO TOGGLE BETWEEN Time Series OR Movement PLOT
+@app.callback(
+    [Output(component_id='movement-plot',component_property='style'),Output(component_id='duration-plot',component_property='style')],
+    [Input(component_id='toggle-movement-time',component_property='value')]
+)
+def toggle_movement_time(toggle):
+    if toggle:
+        return {'display':'none'},{'display': 'block'}
+    else:
+        return {'display': 'block'},{'display':'none'}
+@app.callback(
+    [Output(component_id='click-data-cdr',component_property='style'),Output(component_id='click-data-ipdr-div',component_property='style')],
+    [Input(component_id='toggle-cdr-ipdr',component_property='value')]
+)
+def toggle_cdr_ipdr(toggle):
+    if toggle:
+        return {'display':'none'},{'display': 'block'}
+    else:
+        return {'display': 'block'},{'display':'none'}
 ## 9.10. TO CHANGE THE AVAILABLE ENTRIES IN CALLER-DROPDOWN MENU ACCORDING TO THE DATE RANGE SELECTED.
 @app.callback(
     Output(component_id='caller-dropdown', component_property='options'),
@@ -947,7 +989,7 @@ def update_phone_div_receiver1(selected_date1, selected_date2):
     [Input('duration-slider', 'value')]
     )
 def update__selected_duration_text(value):
-    return  '{} - {}'.format(value[0], value[1])
+    return  'Showing records with durations between {} - {} minutes'.format(value[0], value[1]),
 
 
 ## 9.13. TO RESET ALL FILTERS (except condition, caller and reciever drop-down menus)
