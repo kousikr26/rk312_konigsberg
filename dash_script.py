@@ -23,7 +23,7 @@ import matplotlib
 import requests
 import dash_draggable
 from math import radians, sin, sqrt, cos, atan2
-from dash_layout import *
+from dash_layout2 import *
 ########################################################## Import functions for Breadth First Search ##########################
 from addEdge import addEdge,addEdgemap
 from BFSN import bfs
@@ -353,9 +353,9 @@ def plot_network(df, srs, scs):
 
 
 # 8. The HTML Layout of the App.
-
+#
 # NOTE : All the elements here (visual or statistical) are updated through callbacks as defined in section 9
-app.layout = dash_layout
+app.layout = dash_layout2
 
 #
 
