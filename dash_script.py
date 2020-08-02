@@ -258,6 +258,14 @@ def plot_network(df, srs, scs):
 
     # Reciever Nodes
     df=df[df['Receiver_node']!=-1]
+    selected_callers = []
+    selected_receivers = []
+    if srs != 'None':
+        for p in srs:
+            selected_receivers.append(int(p))
+    if scs != 'None':
+        for p in scs:
+            selected_callers.append(int(p))
     def make_graph(x):
             G.add_edge(x["Caller_node"], x["Receiver_node"])
 
@@ -265,7 +273,7 @@ def plot_network(df, srs, scs):
     pos = nx.nx_agraph.pygraphviz_layout(G)  # Position of Points
 
     edge_trace = [] # Add Edges to Plot
-
+    symbols = []
 ## 7.3. Adds the caller and reciever edge information to each entry. 
     def add_coords(x):
         x0, y0 = pos[x['Caller_node']]
@@ -308,6 +316,12 @@ def plot_network(df, srs, scs):
         hover_list.append(str(node_to_num[node]))
         node_x.append(x)
         node_y.append(y)
+        if node_to_num[node] in selected_callers:
+            symbols.append('x')
+        elif node_to_num[node] in selected_receivers:
+            symbols.append('diamond-cross')
+        else:
+            symbols.append('circle')
         total_duration.append(27*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
     node_trace = go.Scatter(
         x=node_x, y=node_y,
@@ -318,6 +332,7 @@ def plot_network(df, srs, scs):
         marker=dict(
             size=total_duration,
             showscale=True,
+            symbol=symbols,
             line_width=2,
             line_color='black'))  # Nodes visual design info.
 
@@ -573,7 +588,7 @@ def display_selected_data(selectedData, filtered_data):
     df = pd.read_json(filtered_data, orient='split')
     # TODO #3 Graph should also be filtered and only nodes in component should be displayed
     if selectedData is not None:
-        l = []
+        global l
         for point in selectedData['points']:
                 l.append(node_to_num[coords_to_node[point['x'], point['y']]])
         components = bfs(l, df)
