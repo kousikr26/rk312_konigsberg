@@ -346,7 +346,7 @@ def plot_network(df, srs, scs):
                  
 
                     hovermode='closest',
-                    margin=dict(b=20, l=0, r=0, t=20),
+                    margin=dict(b=0, l=0, r=0, t=0),
                     annotations=[dict(
                         showarrow=True,
                         xref="paper", yref="paper",
@@ -364,7 +364,7 @@ def plot_network(df, srs, scs):
     )
     fig.update_layout(clickmode='event+select')  # Event method
     fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1))
-    fig.update_layout(height=500,plot_bgcolor='rgb(96,96,100)')
+    fig.update_layout(height=500,plot_bgcolor='rgb(244, 246, 255)')
     return fig
 
 # store layout (after app.layout) in file and try to import that
