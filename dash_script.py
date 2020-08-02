@@ -746,7 +746,7 @@ def display_selected_data(selectedData, filtered_data):
     if selectedData is not None:
         l = []
         for point in selectedData['points']:
-            l.append(node_to_num[coords_to_node[point['x'], point['y']]])
+                l.append(node_to_num[coords_to_node[point['x'], point['y']]])
         components = bfs(l, df)
         s = ""
         i = 1
@@ -756,7 +756,8 @@ def display_selected_data(selectedData, filtered_data):
             s += "Component "+str(i)+":\n"
             i += 1
             for number in component:
-                s += "\t" + str(number) + "\n"
+                if number!=20000:       #TO NOT DISPLAY 20000 (FROM IPDR ROWS) IN THE COMPONENT SECTION
+                    s += "\t" + str(number) + "\n"
         return s,plot_movement(df,l)
 
     return json.dumps(selectedData, indent=2),go.Figure()
