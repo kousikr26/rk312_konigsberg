@@ -349,7 +349,7 @@ def plot_network(df, srs, scs):
     )
     fig.update_layout(clickmode='event+select')  # Event method
     fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1))
-    fig.update_layout(height=500,plot_bgcolor='rgb(50,0,0)')
+    fig.update_layout(height=500,plot_bgcolor='rgb(96,96,100)')
     return fig
 
 # store layout (after app.layout) in file and try to import that

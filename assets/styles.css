@@ -246,7 +246,7 @@ margin-bottom:60px;
 #stats:hover{
     box-shadow: -5px 5px 3px black;
 }
-input:hover{
+#filters> input:hover{
    background-color:  #6246ea;
    color:white;
 }
@@ -261,8 +261,8 @@ input:hover{
 #stats>div:nth-child(-n+3){
     border-bottom:1px solid black ;
 }
-#sidebar >img:nth-child(1){
-    margin-top: 20em;
+#collapse-filters{
+    margin-top: 10em;
     margin-left: 10%;
 
 }
@@ -274,6 +274,9 @@ input:hover{
     background-color: white;
     margin-left: 10%;
     margin-top: 10em;
+}
+#logout{
+    margin-top: 5em;
 }
 #upload-data{
     width: 100%;
@@ -291,4 +294,19 @@ input:hover{
 }
 #upload-data>div>img:hover{
     width: 30px;
+}
+#login-page{
+    position: fixed;
+    margin-left: 40%;
+    margin-right: 40%;
+    margin-top: 30%;
+    padding:100px;
+    border: 1px dashed black;
+    border-radius: 4%;
+}
+#login-page>div>input{
+    margin-bottom: 4%;
+}
+#login-button{
+   
 }

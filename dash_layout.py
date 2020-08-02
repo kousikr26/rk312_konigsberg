@@ -64,7 +64,7 @@ dash_layout = html.Div(children=[
                                 children=[
                                 html.Div(children=[
                                                     html.Img(
-				                                        src='assets/filter.png',width='20px',id='logout', style={'cursor':'pointer'}
+				                                        src='assets/logout.png',width='20px',id='logout', style={'cursor':'pointer'}
 				                                    ),
 				                                    html.Img(
 				                                        src='assets/filter.png',width='20px',id='collapse-filters', style={'cursor':'pointer'}
@@ -100,6 +100,16 @@ dash_layout = html.Div(children=[
 				                                     dbc.Tooltip(
 				                                     		"Click to upload the database in .csv format",
 				                                     		target='upload-data',
+				                                     		placement='right',
+				                                     	),
+                                                         dbc.Tooltip(
+				                                     		"Logout",
+				                                     		target='logout',
+				                                     		placement='right',
+				                                     	),
+                                                         dbc.Tooltip(
+				                                     		"Toggle Draggable or not.",
+				                                     		target='fix-button',
 				                                     		placement='right',
 				                                     	)
                                     
