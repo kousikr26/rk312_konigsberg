@@ -362,6 +362,9 @@ app.layout = html.Div(children=[
 				                                    html.Img(
 				                                        src='assets/reset.png',width='20px',id='reset-button',n_clicks=0, style={'cursor':'pointer'}
 				                                    ),
+                                                    html.Img(
+				                                        src='assets/reset.png',width='20px',id='fix-button',n_clicks=0, style={'cursor':'pointer'}
+				                                    ),
 				                                   	dcc.Upload(
 				                                                                                        id='upload-data',
 				                                                                                        children=html.Img(src='assets/file-upload.png',
@@ -1243,6 +1246,17 @@ def display_click_map_data(clickData):
         sel_lat = float(clickData['points'][0]['lat'])
         sel_lon = float(clickData['points'][0]['lon'])
         return {'display': 'block'}
+
+@app.callback(
+    [Output('draggable-stats', 'disabled'),Output('draggable-network', 'disabled'),
+     Output('draggable-plot-area', 'disabled'),Output('draggable-movement', 'disabled'),
+     Output('draggable-filters', 'disabled'),Output('draggable-map', 'disabled'),
+     Output('draggable-toggle-plot', 'disabled')],
+    [Input('fix-button', 'n_clicks')])
+def fix_draggability(n_clicks):
+    if n_clicks%2 == 1:
+        return False, False, False, False, False, False, False
+    return True, True, True, True, True, True, True
 ########################################################## Run Server ##########################################################
 server=app.server
 if __name__ == '__main__':
