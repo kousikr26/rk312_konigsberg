@@ -2,6 +2,7 @@
 import pandas as pd
 import base64
 import io
+from Crypto.Protocol.KDF import PBKDF2
 import numpy as np
 import json
 import networkx as nx
@@ -355,7 +356,7 @@ def plot_network(df, srs, scs):
 # 8. The HTML Layout of the App.
 
 # NOTE : All the elements here (visual or statistical) are updated through callbacks as defined in section 9
-app.layout = dash_layout
+app.layout = login_layout
 
 #
 
@@ -759,6 +760,22 @@ def fix_draggability(n_clicks):
     if n_clicks%2 == 1:
         return False, False, False, False, False, False, False
     return True, True, True, True, True, True, True
+@app.callback(
+    Output('main','children'),
+    [Input('login-button','n_clicks')],
+    [State('username','value'),State('password','value')])
+def login(n_clicks, username, password):
+    if username == 'Police' and PBKDF2(bytes(password, 'utf-8'), b"SALT", 16, 1000, None) == b'\xfe\x94\xd0\xe693\x19\xf7\x03@<\x7f\x12\xd7\xd3\xc1':
+        return dash_layout
+    else:
+        return login_layout.children
+
+@app.callback(
+    Output('main','children'),
+    [Input('logout','n_clicks')])
+def logout(n_clicks):
+    return login_layout.children
+
 ########################################################## Run Server ##########################################################
 server=app.server
 if __name__ == '__main__':
