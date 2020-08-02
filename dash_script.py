@@ -2,7 +2,7 @@
 import pandas as pd
 import base64
 import io
-from Crypto.Protocol.KDF import PBKDF2
+#from Crypto.Protocol.KDF import PBKDF2
 import numpy as np
 import json
 import networkx as nx
@@ -765,7 +765,7 @@ def fix_draggability(n_clicks):
     [Input('login-button','n_clicks'),Input('logout','n_clicks')],
     [State('username','value'),State('password','value')])
 def login(n_clicks1, n_clicks2, username, password):
-    if n_clicks2 is None and username == 'Police' and PBKDF2(bytes(password, 'utf-8'), b"SALT", 16, 1000, None) == b'\xfe\x94\xd0\xe693\x19\xf7\x03@<\x7f\x12\xd7\xd3\xc1':
+    if (n_clicks2 is None or n_clicks1>n_clicks2) and username == 'Police' and password == 'Indian':
         return {'display':'none'},{'display':'block'}
     else:
         return {'display':'block'},{'display':'none'}
