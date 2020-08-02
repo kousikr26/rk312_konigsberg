@@ -314,7 +314,7 @@ def plot_network(df, srs, scs):
                  
 
                     hovermode='closest',
-                    margin=dict(b=20, l=5, r=5, t=20),
+                    margin=dict(b=20, l=0, r=0, t=20),
                     annotations=[dict(
                         showarrow=True,
                         xref="paper", yref="paper",
@@ -327,11 +327,11 @@ def plot_network(df, srs, scs):
 
     fig.update_layout(
          hoverlabel = dict(bgcolor='white',font_size = 15,font_family = 'Rockwell'),
-         width=700  #Hover-info design.
+         width=800  #Hover-info design.
     )
     fig.update_layout(clickmode='event+select')  # Event method
     fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1), plot_bgcolor='rgb(255,255,255)')
-    fig.update_layout(height=500,width=500)
+    fig.update_layout(height=500,width=900)
     return fig
 
 
@@ -359,6 +359,50 @@ app.layout = html.Div(children=[
 
                                                     dbc.Col(children=[
                                                                         dcc.Markdown("# Filters"),
+                                                                         html.H5(
+                                                                            'Condition for Caller/Reciever:'
+                                                                        ),
+                                                                        dcc.Dropdown(
+                                                                            id='select-caller-receiver',
+                                                                            options=[{'label': 'Only Caller', 'value': 1}]+[{'label': 'Only Receiver', 'value': 2}]+[
+                                                                                {'label': 'Either Caller or Reciever', 'value': 3}]+[{'label': 'Both Caller and Reciever', 'value': 4}],
+                                                                            value=3,
+                                                                        ),  # Select if you want the select the numbers to be from Caller/Reciever/Both/Either
+                                                                    
+                                                                        html.H5(
+                                                                            ''
+                                                                        ),# For visual clarity
+
+                                                                        html.H5(
+                                                                            'Caller:'
+                                                                        ),
+                                                                        dcc.Dropdown(
+                                                                            id='caller-dropdown',
+                                                                            options=[{'label': 'None', 'value': 'None'}] + \
+                                                                            [{'label': k, 'value': k} for k in df['Caller'].unique()],
+                                                                            value='None',
+                                                                            multi=True,
+                                                                        ),  # Dropdown for Caller
+
+                                                                        html.H5(
+                                                                            ''
+                                                                        ),# For visual clarity
+
+                                                                        html.H5(
+                                                                            'Reciever:'
+                                                                        ),
+                                                                        dcc.Dropdown(
+                                                                            id='receiver-dropdown',
+                                                                            options=[{'label': 'None', 'value': 'None'}] + \
+                                                                            [{'label': k, 'value': k} for k in df['Receiver'].unique()],
+                                                                            value='None',
+                                                                            multi=True,
+                                                                        ),  # Dropdown for Reciever,
+                                                                        
+                                                                        html.H5(
+                                                                            ''
+                                                                        ),# For visual clarity
+                                                                        
                                                                         html.Div([
                                                                         
                                                                        ],id='from-to'),
@@ -448,50 +492,7 @@ app.layout = html.Div(children=[
                                                                                 'display':'none'
                                                                             }
                                                                         ),
-                                                                        html.H5(
-                                                                            'Condition for Caller/Reciever'
-                                                                        ),
-                                                                        dcc.Dropdown(
-                                                                            id='select-caller-receiver',
-                                                                            options=[{'label': 'Only Caller', 'value': 1}]+[{'label': 'Only Receiver', 'value': 2}]+[
-                                                                                {'label': 'Either Caller or Reciever', 'value': 3}]+[{'label': 'Both Caller and Reciever', 'value': 4}],
-                                                                            value=3,
-                                                                        ),  # Select if you want the select the numbers to be from Caller/Reciever/Both/Either
-                                                                    
-                                                                        html.H5(
-                                                                            ''
-                                                                        ),# For visual clarity
-
-                                                                        html.H5(
-                                                                            'Caller:'
-                                                                        ),
-                                                                        dcc.Dropdown(
-                                                                            id='caller-dropdown',
-                                                                            options=[{'label': 'None', 'value': 'None'}] + \
-                                                                            [{'label': k, 'value': k} for k in df['Caller'].unique()],
-                                                                            value='None',
-                                                                            multi=True,
-                                                                        ),  # Dropdown for Caller
-
-                                                                        html.H5(
-                                                                            ''
-                                                                        ),# For visual clarity
-
-                                                                        html.H5(
-                                                                            'Reciever:'
-                                                                        ),
-                                                                        dcc.Dropdown(
-                                                                            id='receiver-dropdown',
-                                                                            options=[{'label': 'None', 'value': 'None'}] + \
-                                                                            [{'label': k, 'value': k} for k in df['Receiver'].unique()],
-                                                                            value='None',
-                                                                            multi=True,
-                                                                        ),  # Dropdown for Reciever,
-                                                                        
-                                                                        html.H5(
-                                                                            ''
-                                                                        ),# For visual clarity
-                                                                        
+                                                                       
                                                                         
                                                                         html.Div([
                                                                                     dcc.Upload(
@@ -851,7 +852,7 @@ def display_selected_data(selectedData, filtered_data):
         l = []
         for point in selectedData['points']:
             l.append(node_to_num[coords_to_node[point['x'], point['y']]])
-        components = bfs(l, df)
+        components = bfs(l, df[df['Receiver']!=20000].reset_index(drop=True))
         s = ""
         i = 1
         for component in components:
