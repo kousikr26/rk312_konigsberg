@@ -356,7 +356,7 @@ def plot_network(df, srs, scs):
 # 8. The HTML Layout of the App.
 
 # NOTE : All the elements here (visual or statistical) are updated through callbacks as defined in section 9
-app.layout = login_layout
+app.layout = dash_layout
 
 #
 
@@ -761,20 +761,15 @@ def fix_draggability(n_clicks):
         return False, False, False, False, False, False, False
     return True, True, True, True, True, True, True
 @app.callback(
-    Output('main','children'),
-    [Input('login-button','n_clicks')],
+    [Output('main','style'),Output('content','style')],
+    [Input('login-button','n_clicks'),Input('logout','n_clicks')],
     [State('username','value'),State('password','value')])
-def login(n_clicks, username, password):
-    if username == 'Police' and PBKDF2(bytes(password, 'utf-8'), b"SALT", 16, 1000, None) == b'\xfe\x94\xd0\xe693\x19\xf7\x03@<\x7f\x12\xd7\xd3\xc1':
-        return dash_layout
+def login(n_clicks1, n_clicks2, username, password):
+    if n_clicks2 is None and username == 'Police' and PBKDF2(bytes(password, 'utf-8'), b"SALT", 16, 1000, None) == b'\xfe\x94\xd0\xe693\x19\xf7\x03@<\x7f\x12\xd7\xd3\xc1':
+        return {'display':'none'},{'display':'block'}
     else:
-        return login_layout.children
+        return {'display':'block'},{'display':'none'}
 
-@app.callback(
-    Output('main','children'),
-    [Input('logout','n_clicks')])
-def logout(n_clicks):
-    return login_layout.children
 
 ########################################################## Run Server ##########################################################
 server=app.server

@@ -45,6 +45,22 @@ final_ipdr_columns = ["App_name","Total Volume","Date","Time","Duration","Privat
 
 
 dash_layout = html.Div(children=[
+                        html.Div(
+                        id = 'main',
+                        children=[
+                        html.Div(       id = 'login-page',
+                                children = [
+                                        html.Div(children=[dcc.Input(id='username', type='text', value=''),dcc.Input(id='password', type='text', value='')]),
+                                            html.Button('Submit', id='login-button')
+                                ]
+                                )
+
+
+                            ]),
+                            html.Div(
+                                id='content',
+                                style={'display':'none'},
+                                children=[
                                 html.Div(children=[
                                                     html.Img(
 				                                        src='assets/filter.png',width='20px',id='logout', style={'cursor':'pointer'}
@@ -545,17 +561,5 @@ dash_layout = html.Div(children=[
                                     style={'display': 'none'}
                                         ), # Filtered Data
     
-                                ]) #End of app.layout
+                                ])]) #End of app.layout
 
-login_layout =  html.Div(
-                        id = 'main',
-                        children=[
-                        html.Div(       id = 'login-page',
-                                children = [
-                                        html.Div(children=[dcc.Input(id='username', type='text', value=''),dcc.Input(id='password', type='text', value='')]),
-                                            html.Button('Submit', id='login-button')
-                                ]
-                                )
-
-
-                            ])
