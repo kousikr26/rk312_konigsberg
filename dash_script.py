@@ -281,6 +281,7 @@ def plot_network(df, srs, scs):
                                    width=3, color='rgba'+str(rgba)),
                                hoverinfo='none',
                                mode='lines',
+                               
         ))  # Graph object for each connection
        
     df.apply(add_coords, axis=1)  # Adding edges
@@ -330,6 +331,7 @@ def plot_network(df, srs, scs):
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
                     )  # Complete Figure
     fig.update_layout(transition_duration=500)  # Transition animation dynamics.
+    fig.update_layout(coloraxis = {'colorscale':'viridis'})
 
     fig.update_layout(
          hoverlabel = dict(bgcolor='white',font_size = 15,font_family = 'Rockwell'),
@@ -379,7 +381,7 @@ app.layout = html.Div(children=[
 				                                     dbc.Tooltip(
 				                                     		"Click to upload the database in .csv format",
 				                                     		target='upload-data',
-				                                     		placement='right'
+				                                     		placement='right',
 				                                     	)
                                     
                                 				],id='sidebar'),

@@ -27,9 +27,9 @@ pre {
     overflow-x: scroll;
     font-family: 'Montserrat';
 }
-#header-title h1{
+/* #header-title h1{
     margin-left: 100%;
-}
+} */
 #message{
     background-color:purple;
     color:white;
