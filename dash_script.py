@@ -2,6 +2,7 @@
 import pandas as pd
 import base64
 import io
+#from Crypto.Protocol.KDF import PBKDF2
 import numpy as np
 import json
 import networkx as nx
@@ -761,6 +762,17 @@ def fix_draggability(n_clicks):
     if n_clicks%2 == 1:
         return False, False, False, False, False, False, False
     return True, True, True, True, True, True, True
+@app.callback(
+    [Output('main','style'),Output('content','style')],
+    [Input('login-button','n_clicks'),Input('logout','n_clicks')],
+    [State('username','value'),State('password','value')])
+def login(n_clicks1, n_clicks2, username, password):
+    if (n_clicks2 is None or n_clicks1>n_clicks2) and username == 'Police' and password == 'Indian':
+        return {'display':'none'},{'display':'block'}
+    else:
+        return {'display':'block'},{'display':'none'}
+
+
 ########################################################## Run Server ##########################################################
 server=app.server
 if __name__ == '__main__':
