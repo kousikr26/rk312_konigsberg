@@ -62,23 +62,40 @@ dash_layout2 = html.Div(children=[
                             ]),
                             html.Div(id='content',
                                 style={'display':'none'},children=[
-                                dbc.Row(children=[html.Div(children=[
+                                      dbc.Modal(
+                                         [
+                                              dbc.ModalHeader("Filtered Data"),
+                                             dbc.ModalBody(id='filtered-data-neat'),
+                                            dbc.ModalFooter(
+                                           dbc.Button("Close", id="close-xl", className="ml-auto")
+                                             ),
+                                          ],
+            id="modal-xl",
+            size="xl",
+        ),
+                                dbc.Row(children=[
+
+                                
+                                    html.Div(children=[
                                                     html.Img(
-				                                        src='assets/logout.png',width='20px',id='logout', style={'cursor':'pointer'}
+				                                        src='assets/logout.png',width='40px',id='logout', style={'cursor':'pointer'}
 				                                    ),
 				                                    html.Img(
-				                                        src='assets/filter.png',width='20px',id='collapse-filters', style={'cursor':'pointer'}
+				                                        src='assets/filter.png',width='40px',id='collapse-filters', style={'cursor':'pointer'}
 				                                    ),
 				                                    html.Img(
-				                                        src='assets/reset.png',width='20px',id='reset-button',n_clicks=0, style={'cursor':'pointer'}
+				                                        src='assets/reset.png',width='40px',id='reset-button',n_clicks=0, style={'cursor':'pointer'}
 				                                    ),
                                                     html.Img(
-				                                        src='assets/drag.png',width='20px',id='fix-button',n_clicks=0, style={'cursor':'pointer'}
+				                                        src='assets/drag.png',width='40px',id='fix-button',n_clicks=0, style={'cursor':'pointer'}
+				                                    ),
+                                                     html.Img(
+				                                        src='assets/grid.png',width='40px',id='show-filtered',n_clicks=0, style={'cursor':'pointer'}
 				                                    ),
 				                                   	dcc.Upload(
 				                                                                                        id='upload-data',
 				                                                                                        children=html.Img(src='assets/file-upload.png',
-				                                                                                        width='20px'),
+				                                                                                        width='40px'),
 				                                                                                        
 				                                                                                        # Allow multiple files to be uploaded
 				                                                                                        multiple=False
@@ -110,7 +127,13 @@ dash_layout2 = html.Div(children=[
 				                                     		"Click to upload the database in .csv format",
 				                                     		target='upload-data',
 				                                     		placement='right',
+				                                     	),
+                                                         dbc.Tooltip(
+				                                     		"See Filtered Data",
+				                                     		target='show-filtered',
+				                                     		placement='right',
 				                                     	)
+                                    
                                     
                                 				],id='sidebar')
                                                 

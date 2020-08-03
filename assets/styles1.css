@@ -54,22 +54,23 @@
   height: 100%;
 }
 #sidebar{
-    display: block;
+    display: inline-block;
+    text-align: center;
 }
 #sidebar >img:nth-child(1){
     margin-top: 10em;
-    margin-left: 50%;
+    margin-left: 20%;
  
 
 }
 #reset-button{
     margin-top: 10em;
-    margin-left: 50%;
+    margin-left: 20%;
 
 }
 #fix-button{
-    background-color: white;
-    margin-left: 50%;
+    /* background-color: white; */
+    margin-left: 20%;
     margin-top: 10em;
 
 }
@@ -84,14 +85,19 @@
     text-align: center;
     margin-bottom:12px;
     margin-top:10em;
-    margin-left: 5%;
+    margin-left: 10%;
 }
 #collapse-filters{
     margin-top:10em;
-    margin-left: 50%;
+    margin-left: 20%;
+}
+
+#show-filtered{
+    margin-top:10em;
+    margin-left: 20%;
 }
 #header-text{
-    margin-left: 10%;
+    margin-left: 15%;
     width: 80%;
 }
 

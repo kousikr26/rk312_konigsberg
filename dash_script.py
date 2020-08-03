@@ -45,6 +45,12 @@ from BFSN import bfs
 
 
 
+
+def toggle_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
+
 ########################################################## Stylesheet ##########################################################
 external_stylesheets = [dbc.themes.SANDSTONE,'https://codepen.io/dadamson/pen/vPVxxq.css']
  
@@ -896,8 +902,18 @@ def login(n_clicks1, n_clicks2, username, password):
     else:
         return {'display':'block'},{'display':'none'}
 
+@app.callback(
+    Output('filtered-data-neat','children'),
+    [Input('filtered-data','children')]
+)
+def print_filtered(filtered_data):
+    df_new =pd.read_json(filtered_data, orient='split').reset_index(drop=True)[['Caller','Receiver','Date','Time','Duration','IMEI']]
+    return dash_table.DataTable(id='table',columns=[{"name": i, "id": i} for i in df_new.columns],data=df_new.to_dict('records'),)
 
+app.callback(
+    Output("modal-xl", "is_open"),[Input("show-filtered", "n_clicks"), Input("close-xl", "n_clicks")],[State("modal-xl", "is_open")]
+)(toggle_modal)
 ########################################################## Run Server ##########################################################
 server=app.server
 if __name__ == '__main__':
-    app.run_server(debug=False, host='0.0.0.0')
+    app.run_server(debug=True, host='0.0.0.0')

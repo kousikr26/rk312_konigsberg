@@ -202,15 +202,16 @@ margin-bottom:60px;
     top:0;
     height:100vh;
     
-    width:10%;
+    width:5%;
     margin-right: 10%;
     background-color: black;
     /* position: relative; */
     /* Fixed Sidebar (stay in place on scroll) */
     position: fixed; 
     display: block;
-    over
+    
   z-index: 1; 
+
 }
 
 #network-plot-div{
@@ -232,7 +233,7 @@ margin-bottom:60px;
     font-size: 56px;
 }
 #header-title img{
-    margin:1%
+    margin:0%;
 }
 #switch-cdr-ipdr{
     display:inline-flex;
@@ -302,12 +303,14 @@ margin-bottom:60px;
     margin-left: 10%;
 }
 #fix-button{
-    background-color: white;
+    /* background-color: white; */
     margin-left: 10%;
     margin-top: 10em;
 }
 #logout{
     margin-top: 5em;
+    background-color: white;
+    border-radius: 6%;
 }
 #upload-data{
     width: 100%;
@@ -321,12 +324,12 @@ margin-bottom:60px;
     margin-top:10em;
 }
 #sidebar>img:hover{
-    width: 30px;
+    width: 50px;
     transform: translateX(-5px);
    
 }
 #upload-data>div>img:hover{
-    width: 30px;
+    width: 50px;
 }
 #login-page{
     position: fixed;
