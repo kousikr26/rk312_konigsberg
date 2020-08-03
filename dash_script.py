@@ -67,8 +67,9 @@ tower_std=df.groupby(['TowerID'])['Duration'].std()
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = 'CDR/IPDR Analyser'
 
-
-
+suspicious_towers=['40478-38009-10112','40478-41081-10962474','40458-2131-13052','40467-1164-10423','40458-3091-20260037','40493-903-38141']
+suspicious_users=[9340552262,8824403719,8803318491,8007977426,8650807946,9074636167]
+towers["Suspicious"]=towers["TowerID"].apply(lambda x :1 if x in suspicious_towers else 0)
 
 # 3. Setting Default Variables for various Filters ####
 default_duration_slider_val = [0, 100]    ## Also needed in dash_layout.py
@@ -417,6 +418,7 @@ sel_lon = 0
 )
 def update_filtered_div_caller(radius,contents, selected_date1, selected_date2, selected_duration, selected_time, selected_option, selected_caller, selected_receiver,ml_value,contamination):
     # Date,Time,Duration Filter
+    global suspicious_users
     if contents is not None:
         content_type, content_string = contents.split(',')
         decoded = base64.b64decode(content_string)
@@ -452,6 +454,31 @@ def update_filtered_div_caller(radius,contents, selected_date1, selected_date2, 
         towers_req = towers_c[ver]['TowerID'].unique()
         filtered_df = filtered_df[filtered_df['TowerID'].isin(towers_req)]
 
+    
+    if ml_value in [1,2,3,4,5,6]:
+        filtered_df=pd.merge(filtered_df,towers[['lat','lon','TowerID','Suspicious']],on='TowerID')
+        filtered_df['Time_new']=pd.to_datetime(filtered_df['Time'],format='%H:%M:%S')
+        filtered_df["Time_new"]=filtered_df["Time_new"].apply(lambda x: (x - x.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds())
+        filtered_df["Suspicious users"]=filtered_df[["Caller","Receiver"]].apply(lambda x : 1 if (x.Caller in suspicious_users or x.Receiver in suspicious_users) else 0,axis=1)
+        contamination/=100
+        if (ml_value==3):
+            iso=IsolationForest(contamination=contamination)
+            mask=iso.fit_predict(filtered_df[["Time_new","Duration","lat","lon",'Suspicious','Suspicious users']])==-1
+            filtered_df=filtered_df[mask].drop(['lat','lon','Time_new'],axis=1)
+        elif(ml_value==4):
+            iso=EllipticEnvelope(contamination=contamination)
+            mask=iso.fit_predict(filtered_df[["Time_new","Duration","lat","lon",'Suspicious','Suspicious users']])==-1
+            filtered_df=filtered_df[mask].drop(['lat','lon','Time_new'],axis=1)
+        elif(ml_value==5):
+            iso=LocalOutlierFactor(contamination=contamination)
+            mask=iso.fit_predict(filtered_df[["Time_new","Duration","lat","lon",'Suspicious','Suspicious users']])==-1
+            filtered_df=filtered_df[mask].drop(['lat','lon','Time_new'],axis=1)
+        elif(ml_value==1):
+            filtered_df=filtered_df[filtered_df["Suspicious"]==1]
+            filtered_df=filtered_df.drop(['lat','lon','Time_new'],axis=1)
+        elif(ml_value==2):
+            filtered_df=filtered_df[filtered_df["Suspicious users"]==1]
+            filtered_df=filtered_df.drop(['lat','lon','Time_new'],axis=1)
     # Number Filter
     # If Caller is Selected
     if(selected_option == 1):
@@ -474,20 +501,9 @@ def update_filtered_div_caller(radius,contents, selected_date1, selected_date2, 
         if selected_caller != 'None' and selected_receiver != 'None':
             filtered_df = df[((filtered_df['Caller'].isin(list(selected_caller))) & (
                 filtered_df['Receiver'].isin(list(selected_receiver))))].reset_index(drop=True)
-    if ml_value in [1,2,3]:
-        filtered_df=pd.merge(filtered_df,towers[['lat','lon','TowerID']],on='TowerID')
-        filtered_df['Time_new']=pd.to_datetime(filtered_df['Time'],format='%H:%M:%S')
-        filtered_df["Time_new"]=filtered_df["Time_new"].apply(lambda x: (x - x.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds())
-        contamination/=100
-        if (ml_value==1):
-            iso=IsolationForest(contamination=contamination)
-        elif(ml_value==2):
-            iso=EllipticEnvelope(contamination=contamination)
-        elif(ml_value==3):
-            iso=LocalOutlierFactor(contamination=contamination)
-    
-        mask=iso.fit_predict(filtered_df[["Time_new","Duration","lat","lon"]])==-1
-        filtered_df=filtered_df[mask].drop(['lat','lon','Time_new'],axis=1)
+
+
+
     if filtered_df.shape[0] == 0:
         # No update since nothing matches
         return dash.no_update, 'Nothing Matches that Query'
@@ -500,7 +516,7 @@ def update_filtered_div_caller(radius,contents, selected_date1, selected_date2, 
     [Input(component_id='ml-mode', component_property='value')]
 )
 def hide_stat(mode):
-    if(mode==4):
+    if(mode==6):
         return {'display':'block'}
     else:
         return {'display':'none'}

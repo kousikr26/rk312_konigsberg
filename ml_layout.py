@@ -6,8 +6,8 @@ ml_layout=html.Div([
     html.Div([
          dcc.Dropdown(
             id='ml-mode',
-            options=[{'label': 'None', 'value': 0}]+[{'label': 'Machine Learning - Isolation Forest', 'value': 1}]+[{'label': 'Machine Learning - Elliptic Envelope', 'value': 2}]+[
-                {'label': 'Machine Learning - Local Outlier Factor', 'value': 3}] +[{'label': 'Statistical Anomaly', 'value': 4}],
+            options=[{'label': 'None', 'value': 0}]+[{'label': 'Suspicious Locations', 'value': 1}]+[{'label': 'Suspicious Users', 'value': 2}]+[{'label': 'Machine Learning - Isolation Forest', 'value': 3}]+[{'label': 'Machine Learning - Elliptic Envelope', 'value': 4}]+[
+                {'label': 'Machine Learning - Local Outlier Factor', 'value': 5}] +[{'label': 'Statistical Anomaly', 'value': 6}],
             value=0,
         ),  
         dcc.Slider(
