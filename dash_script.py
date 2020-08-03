@@ -24,7 +24,7 @@ import matplotlib
 import requests
 import dash_draggable
 from math import radians, sin, sqrt, cos, atan2
-from dash_layout import *
+from dash_layout2 import *
 from ml_layout import *
 from datetime import datetime
 
@@ -774,9 +774,9 @@ def ResetFilters(button_reset):
 )
 def Zoom(mode):
     if mode!=None and mode%2==1 :
-     {'display':'none'}
+        return  {'display':'none'}
     else:
-     {'display':'flex'}
+        return {'display':'flex'}
 
 @app.callback(
     Output('radius-div', 'style'),

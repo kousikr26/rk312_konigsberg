@@ -9,7 +9,7 @@ from dash.dependencies import Input, Output, State
 from datetime import datetime as dt
 import dash_bootstrap_components as dbc
 import dash_draggable
-
+from ml_layout import *
 
 
 df = pd.read_csv('./data/final_data.csv')
@@ -44,7 +44,27 @@ final_data_columns = ["Receiver","Date","TowerID"]
 final_ipdr_columns = ["App_name","Total Volume","Date","Time","Duration","Private IP"]
 
 dash_layout2 = html.Div(children=[
+    html.Div(id='bg-image'),
+                        html.Div(
+                        id = 'main',
+                        children=[
+                        html.Div(       id = 'login-page',
+                                children = [
+                                    html.Img(src='assets/logo_final.png',height='50px'),
+                                    html.H2('Login to proceed.'),
+                                        html.Div(children=[dcc.Input(id='username',placeholder='Username', type='text', value='',),dcc.Input(id='password',placeholder='Password', type='password', value='')]),
+                                            html.Button('Login', id='login-button')
+                                ]
+                                )
+
+
+                            ]),
+                            html.Div(id='content',
+                                style={'display':'none'},children=[
                                 dbc.Row(children=[html.Div(children=[
+                                                    html.Img(
+				                                        src='assets/logout.png',width='20px',id='logout', style={'cursor':'pointer'}
+				                                    ),
 				                                    html.Img(
 				                                        src='assets/filter.png',width='20px',id='collapse-filters', style={'cursor':'pointer'}
 				                                    ),
@@ -75,7 +95,16 @@ dash_layout2 = html.Div(children=[
 													            target='reset-button',
 													            placement = 'right'
 													        ),
-
+                                                    dbc.Tooltip(
+													            "Click to logout of current session",
+													            target='logout',
+													            placement = 'right'
+													        ),
+                                                        dbc.Tooltip(
+													            "Toggle draggability",
+													            target='fix-button',
+													            placement = 'right'
+													        ),
 				                                     dbc.Tooltip(
 				                                     		"Click to upload the database in .csv format",
 				                                     		target='upload-data',
@@ -87,7 +116,7 @@ dash_layout2 = html.Div(children=[
                                                 ]),
                                 dbc.Row(children=[html.Div(children=[ 
                                                     html.Div([
-                                                    html.Img(src='assets/Logo.jpeg',height='50px'),
+                                                    html.Img(src='assets/logo_final.png',height='50px'),
                                                     html.H1('CDR Analyser'),],id='header-title'), # TITLE BOLDED, for more 'oompf'.
                                                     html.Br(),
                                                     html.Div([
@@ -109,6 +138,7 @@ dash_layout2 = html.Div(children=[
                                                                                             id='draggable-filters-div',
                                                                                             className='handle',
                                                                                             children=[
+                                                                                                  dcc.Markdown('# Statistics'),
                                                                         dbc.Row(id='filters',children=[          # for all filters
 
                                                                                 
@@ -127,7 +157,7 @@ dash_layout2 = html.Div(children=[
                                                                                                 date=str(dt(2020, 6, 17, 0, 0, 0)),
                                                                                                 display_format='DD-MMM-YY',
                                                                                                 style={'z-index':1000},
-                                                                                                with_portal=True,
+                                                                                             
                                                                                             )],  # Data Picker
                                                                                             ),
                                                                                         dbc.Tooltip(
@@ -147,7 +177,7 @@ dash_layout2 = html.Div(children=[
                                                                                             initial_visible_month=dt(2020, 6, 5),
                                                                                             date=str(dt(2020, 6, 17, 0, 0, 0)),
                                                                                             display_format='DD-MMM-YY',
-                                                                                            with_portal=True
+                                                                                         
                                                                                         ),])],id='from-to-box'),  # Data Picker
                                                                                         
                                                                                         dbc.Tooltip(
@@ -306,7 +336,7 @@ dash_layout2 = html.Div(children=[
 
 
                                                                                             ],
-                                                                                            id='column-1',lg=3),
+                                                                                            id='column-1',lg=6),
                                                                                             dbc.Col( #choose receiver
                                                                                                 children=[
                                                                                                             html.H5(
@@ -330,11 +360,22 @@ dash_layout2 = html.Div(children=[
                                                                                                                 ''
                                                                                                             ),# For visual clarity
 
-                                                                                            ],id='column-2',lg=3),
+                                                                                            ],id='column-2',lg=6),
+                                                                                            
                                                                                             
                                                                                         
                                                                                         ]),
-                                                                                ], id='filters-user',lg=6)]   
+                                                                                ], id='filters-user',lg=3)
+                                                                                ,
+                                                                                dbc.Col(
+                                                                                    children=[
+                                                                            html.Div([''],className='largespacing'),
+                                                                            html.H5('Suspicious Activity'),
+                                                                                     ml_layout,
+  
+                                                                                    ],lg=3,id='ml-filter'
+                                                                                )
+                                                                                ]   
                                                                         )])]), 
 
 ###FILTERS DONE*****************************************************************************************
@@ -584,7 +625,7 @@ dash_layout2 = html.Div(children=[
                                             style={'display': 'none'}
                                         ), # Filtered Data
 
-])
+])])
     
 
 

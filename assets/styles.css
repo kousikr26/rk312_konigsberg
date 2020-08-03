@@ -181,6 +181,7 @@ margin-bottom:60px;
 #sidebar{
     top:0;
     height:100vh;
+    
     width:10%;
     margin-right: 10%;
     background-color: black;
@@ -306,7 +307,7 @@ margin-bottom:60px;
     position: fixed;
     margin-left: 40%;
     margin-right: 40%;
-    margin-top: 20%;
+    margin-top: 15%;
     padding:100px;
     border: 1px dashed black;
     border-radius: 4%;
@@ -320,9 +321,10 @@ margin-bottom:60px;
     margin-bottom: 10px;
 }
 #login-button{
-   width:50px;
+   /* width:50px; */
    height: 30px;
    border:1px solid black;
+   padding-bottom: 35px;
    border-radius: 7%;
    
 }

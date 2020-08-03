@@ -9,9 +9,12 @@
 }
 #filters{
     display: flex;
-    
+    margin-bottom: 3%;
+    height: 100%;
+    padding-bottom: 3%;
   
 }
+
 #draggable-filters{
     width: 83%;
     margin-left: 13%;
@@ -23,7 +26,7 @@
     width:80%
 }
 #stats{
-    margin-left: 0%;
+    margin-left: 2%;
 }
 #main-area{
     display: inline-flex;
@@ -53,7 +56,7 @@
     display: block;
 }
 #sidebar >img:nth-child(1){
-    margin-top: 20em;
+    margin-top: 10em;
     margin-left: 50%;
  
 
@@ -82,6 +85,30 @@
     margin-top:10em;
     margin-left: 5%;
 }
+#collapse-filters{
+    margin-top:10em;
+    margin-left: 50%;
+}
 #header-text{
     margin-left: 10%;
+    width: 80%;
+}
+
+#ml-filter{
+    width: 5%;
+    margin-left: 0%;
+    margin-right: 0%;
+}
+#select-caller-receiver{
+    width: 100%;
+
+}
+#ml-mode{
+    margin-bottom: 2%;
+}
+#filters-user{
+    margin-left: 0%;
+}
+#to-from-column{
+    margin-left: 0%;
 }
