@@ -10,6 +10,7 @@ from datetime import datetime as dt
 import dash_bootstrap_components as dbc
 import dash_draggable
 from ml_layout import *
+from StatAnom_layout import *
 
 
 df = pd.read_csv('./data/final_data.csv')
@@ -372,6 +373,7 @@ dash_layout2 = html.Div(children=[
                                                                                     children=[
                                                                             html.H5('Suspicious Activity'),
                                                                                      ml_layout,
+                                                                                    StatAnom_layout
   
                                                                                     ],lg=3,id='ml-filter'
                                                                                 )

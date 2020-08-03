@@ -487,68 +487,82 @@ def update_filtered_div_caller(radius,contents, selected_date1, selected_date2, 
         # Update Filtered Dataframe
         return filtered_df.to_json(date_format='iso', orient='split'), 'Updated'
 
+@app.callback(
+    Output(component_id='stat-anom',component_property='style'),
+    [Input(component_id='ml-mode', component_property='value')]
+)
+def hide_stat(mode):
+    if(mode==4):
+        return {'display':'block'}
+    else:
+        return {'display':'none'}
 
 @app.callback(
-	Output('Duration-distribution-plot', 'figure'),
-	[Input('Anomaly-from-dropdown', 'value'), Input(component_id='filtered-data', component_property='children')]
-	)
+    Output('Duration-distribution-plot', 'figure'),
+    [Input('Anomaly-from-dropdown', 'value'), Input(component_id='filtered-data', component_property='children')]
+    )
 def Update_Duration_distrib(feature_value, filtered_data):
 
-	if feature_value == 1:	
-		#Anomaly from Duration - CDR
-		df = pd.read_json(filtered_data, orient='split')
-		df_cdr = df[df["Receiver"]!=20000]
-		EachNumTotDur = SumFeatures(df=df, pivot_identifier=['Caller', 'Receiver'], SD_dict={"Duration":None}) #SD_dict's keys aren't used in the function
-		hist_data = [EachNumTotDur["Duration"]]
-		group_labels = ['Duration Distribution of the filtered data - CDR'] # name of the dataset
-		fig = ff.create_distplot(hist_data, group_labels,  show_hist=False)
-		return fig
+    if feature_value == 1:	
+        #Anomaly from Duration - CDR
+        df = pd.read_json(filtered_data, orient='split')
+        df_cdr = df[df["Receiver"]!=20000]
+        EachNumTotDur = SumFeatures(df=df, pivot_identifier=['Caller', 'Receiver'], SD_dict={"Duration":None}) #SD_dict's keys aren't used in the function
+        hist_data = [EachNumTotDur["Duration"]]
+        group_labels = ['Duration Distribution of the filtered data - CDR'] # name of the dataset
+        fig = ff.create_distplot(hist_data, group_labels,  show_hist=False)
+        fig.update_layout(margin=dict(l = 0, r = 0, t = 0, b = 0))
+        return fig
 
 
-	elif feature_value == 2:	
-		#Anomaly from Duration - IPDR
-		df = pd.read_json(filtered_data, orient='split')
-		df_ipcdr = df[df["Receiver"]==20000]
-		EachNumTotDur = SumFeatures(df=df, pivot_identifier=['Caller'], SD_dict={"Duration":None}) #SD_dict's keys aren't used in the function
-		hist_data = [EachNumTotDur["Duration"]]
-		group_labels = ['Duration Distribution of the filtered data - IPDR'] # name of the dataset
-		fig = ff.create_distplot(hist_data, group_labels, show_hist=False)
-		return fig
+    elif feature_value == 2:	
+        #Anomaly from Duration - IPDR
+        df = pd.read_json(filtered_data, orient='split')
+        df_ipcdr = df[df["Receiver"]==20000]
+        EachNumTotDur = SumFeatures(df=df, pivot_identifier=['Caller'], SD_dict={"Duration":None}) #SD_dict's keys aren't used in the function
+        hist_data = [EachNumTotDur["Duration"]]
+        group_labels = ['Duration Distribution of the filtered data - IPDR'] # name of the dataset
+        fig = ff.create_distplot(hist_data, group_labels, show_hist=False)
+        fig.update_layout(margin=dict(l = 0, r = 0, t = 0, b = 0))
+        return fig
 
 
-	elif feature_value == 3:	
-		#Anomaly from Uplink Volume - IPDR
-		df = pd.read_json(filtered_data, orient='split')
-		df_ipdr = df[df["Receiver"]==20000]
-		EachNumTotDur = SumFeatures(df=df, pivot_identifier=['Caller'], SD_dict={"Uplink Volume":None}) #SD_dict's keys aren't used in the function
-		hist_data = [EachNumTotDur["Uplink Volume"]]
-		group_labels = ['Uplink Volume Distribution of the filtered data'] # name of the dataset
-		fig = ff.create_distplot(hist_data, group_labels,  show_hist=False)
-		return fig
+    elif feature_value == 3:	
+        #Anomaly from Uplink Volume - IPDR
+        df = pd.read_json(filtered_data, orient='split')
+        df_ipdr = df[df["Receiver"]==20000]
+        EachNumTotDur = SumFeatures(df=df, pivot_identifier=['Caller'], SD_dict={"Uplink Volume":None}) #SD_dict's keys aren't used in the function
+        hist_data = [EachNumTotDur["Uplink Volume"]]
+        group_labels = ['Uplink Volume Distribution of the filtered data'] # name of the dataset
+        fig = ff.create_distplot(hist_data, group_labels,  show_hist=False)
+        fig.update_layout(margin=dict(l = 0, r = 0, t = 0, b = 0))
+        return fig
 
 
-	elif feature_value == 4:	
-		#Anomaly from Downlink Volume - IPDR
-		df = pd.read_json(filtered_data, orient='split')
-		df_ipdr = df[df["Receiver"]==20000]
-		EachNumTotDur = SumFeatures(df=df, pivot_identifier=['Caller'], SD_dict={"Downlink Volume":None}) #SD_dict's keys aren't used in the function
-		hist_data = [EachNumTotDur["Downlink Volume"]]
-		group_labels = ['Downlink Volume Distribution of the filtered data'] # name of the dataset
-		fig = ff.create_distplot(hist_data, group_labels,  show_hist=False)
-		return fig
+    elif feature_value == 4:	
+        #Anomaly from Downlink Volume - IPDR
+        df = pd.read_json(filtered_data, orient='split')
+        df_ipdr = df[df["Receiver"]==20000]
+        EachNumTotDur = SumFeatures(df=df, pivot_identifier=['Caller'], SD_dict={"Downlink Volume":None}) #SD_dict's keys aren't used in the function
+        hist_data = [EachNumTotDur["Downlink Volume"]]
+        group_labels = ['Downlink Volume Distribution of the filtered data'] # name of the dataset
+        fig = ff.create_distplot(hist_data, group_labels,  show_hist=False)
+        fig.update_layout(margin=dict(l = 0, r = 0, t = 0, b = 0))
+        return fig
 
 
-	elif feature_value == 5:	
-		#Anomaly from Total Volume - IPDR
-		df = pd.read_json(filtered_data, orient='split')
-		df_ipdr = df[df["Receiver"]==20000]
-		EachNumTotDur = SumFeatures(df=df, pivot_identifier=['Caller'], SD_dict={"Total Volume":None}) #SD_dict's keys aren't used in the function
-		hist_data = [EachNumTotDur["Total Volume"]]
-		group_labels = ['Total Volume Distribution of the filtered data'] # name of the dataset
-		fig = ff.create_distplot(hist_data, group_labels,  show_hist=False)
-		return fig
+    elif feature_value == 5:	
+        #Anomaly from Total Volume - IPDR
+        df = pd.read_json(filtered_data, orient='split')
+        df_ipdr = df[df["Receiver"]==20000]
+        EachNumTotDur = SumFeatures(df=df, pivot_identifier=['Caller'], SD_dict={"Total Volume":None}) #SD_dict's keys aren't used in the function
+        hist_data = [EachNumTotDur["Total Volume"]]
+        group_labels = ['Total Volume Distribution of the filtered data'] # name of the dataset
+        fig = ff.create_distplot(hist_data, group_labels,  show_hist=False)
+        fig.update_layout(margin=dict(l = 0, r = 0, t = 0, b = 0))
+        return fig
 
-	return go.Figure()
+    return go.Figure()
 
 ################# TODO : ADD THE ALPHA SLIDER WHICH WILL DENOTE THE STANDARD DEVIATION LIMIT, AND THEN FLAG THOSE RECORDS WHO ARE ABOVE THE CALCULATED THRESHOLD. - Animesh.
 

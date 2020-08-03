@@ -17,4 +17,4 @@ StatAnom_layout=html.Div([
                         value=0,
                 )
             ])
-    ])  
+    ],id='stat-anom')  
