@@ -924,7 +924,8 @@ def login(n_clicks1, n_clicks2, username, password):
 )
 def print_filtered(filtered_data):
     df_new =pd.read_json(filtered_data, orient='split').reset_index(drop=True)[['Caller','Receiver','Date','Time','Duration','IMEI']]
-    return dash_table.DataTable(id='table',columns=[{"name": i, "id": i} for i in df_new.columns],data=df_new.to_dict('records'),)
+    return dash_table.DataTable(id='table',columns=[{"name": i, "id": i} for i in df_new.columns],data=df_new.to_dict('records'), filter_action="native",
+        sort_action="native",sort_mode="multi", column_selectable="single", row_selectable="multi",page_size= 10,)
 
 app.callback(
     Output("modal-xl", "is_open"),[Input("show-filtered", "n_clicks"), Input("close-xl", "n_clicks")],[State("modal-xl", "is_open")]

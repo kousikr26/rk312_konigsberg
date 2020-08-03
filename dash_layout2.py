@@ -72,6 +72,7 @@ dash_layout2 = html.Div(children=[
                                           ],
             id="modal-xl",
             size="xl",
+            style={'z-index':'123999'}
         ),
                                 dbc.Row(children=[
 
