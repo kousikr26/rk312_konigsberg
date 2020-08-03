@@ -372,6 +372,7 @@ dash_layout2 = html.Div(children=[
                                                                                 dbc.Col(
                                                                                     children=[
                                                                             html.H5('Suspicious Activity'),
+                                                                            html.P('Prescriptive Policing'),
                                                                                      ml_layout,
                                                                                     StatAnom_layout
   

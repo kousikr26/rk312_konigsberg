@@ -36,10 +36,18 @@ h3,h4{
     color: white;
 }
 h5.h6,p,pre{
-    font-weight: 200;
+    font-weight: 400;
 }
+#draggable-toggle-div{
+    background-color: var(--div-background);
+    border: 4px solid black;
+    margin-bottom: 2%;
+}
+
 pre {
     /* border: thin lightgrey solid; */
+
+    font-weight: 600;
     overflow-x: scroll;
     font-family: 'Montserrat';
 }
@@ -53,11 +61,16 @@ pre {
     text-align:center;
     padding: 5px;
     display: inline;
-    margin-left: 96%;
+    margin-left: 56%;
 }
 #header-subtitle{
     display: inline;
     
+}
+#header-subtitle i{
+    color:white;
+    font-weight: 600;
+
 }
 #header-text{
     text-align: left;
@@ -77,7 +90,7 @@ pre {
 }
 #filters{
     /* background-color: white; */
-    border:1px black solid;
+    border:4px black solid;
     border-radius: 2%;
     padding: 0px;
 height: 100%;
@@ -133,8 +146,15 @@ margin-left: 4%;
     display: inline-flex;
     margin-left: 30%;
 margin-right: 30%;
-}
+vertical-align: middle;+
 
+}
+#toggle-network-map{
+    padding-top:5%
+}
+#plot-header > h3{
+    color:black;
+}
 #toggle-network-map{
     width:20%
 }
@@ -194,7 +214,7 @@ margin-bottom:60px;
 }
 
 #network-plot-div{
-    border:1px black solid;
+    border:4px black solid;
     padding:2px;
     border-radius: 2%;
     background-color: var(--div-background);
@@ -205,9 +225,14 @@ margin-bottom:60px;
 }
 #header-title{
     display: inline-flex;
+    width:100%;
 }
 #header-title h1{
     padding-top: 7px;
+    font-size: 56px;
+}
+#header-title img{
+    margin:1%
 }
 #switch-cdr-ipdr{
     display:inline-flex;
@@ -229,7 +254,7 @@ margin-bottom:60px;
     box-shadow: -5px 5px 3px black;
 }
 #map-plot{
-    border: 1px solid black;
+    border: 4px solid black;
     border-radius: 2%;
     box-shadow: -5px 5px 3px black;
     margin-bottom: 20px;
@@ -245,7 +270,7 @@ margin-bottom:60px;
     margin-bottom: 20px;
     padding:2px;
     height:80vh;
-    border: 1px solid black;
+    border: 4px solid black;
     overflow-y: scroll;
     margin-left: -4px;
 }
@@ -327,4 +352,7 @@ margin-bottom:60px;
    padding-bottom: 35px;
    border-radius: 7%;
    
+}
+#switch-cdr-ipdr h3{
+    color:black;
 }
