@@ -180,7 +180,7 @@ def plot_map(filtered_df):
     fig=go.Figure(people,layout={
         'mapbox_style':'open-street-map',
         'margin': dict(l = 0, r = 0, t = 0, b = 0),
-        'height':500,
+     
         'mapbox':dict(
         
             bearing=0,
@@ -776,7 +776,7 @@ def Zoom(mode):
     if mode!=None and mode%2==1 :
         return  {'display':'none'}
     else:
-        return {'display':'flex'}
+        return {'display':'block'}
 
 @app.callback(
     Output('radius-div', 'style'),

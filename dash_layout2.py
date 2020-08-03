@@ -138,10 +138,12 @@ dash_layout2 = html.Div(children=[
                                                                                             id='draggable-filters-div',
                                                                                             className='handle',
                                                                                             children=[
-                                                                                                  dcc.Markdown('# Statistics'),
-                                                                        dbc.Row(id='filters',children=[          # for all filters
+                                                                                                  
+                                                                        html.Div(id='filters',children=[          # for all filters
 
+                                                                                html.H1('Filters','filter-title'),
                                                                                 
+                                                                                dbc.Row(children=[
                                                                                 dbc.Col(children=[     # to from
                                                                       
                                                                                         html.Div([
@@ -253,7 +255,6 @@ dash_layout2 = html.Div(children=[
                                                  
 
 
-                                                                                                            html.Div([''],className='largespacing'),
                                     
                                                                                                             html.Div([
                                                                                                             dcc.Slider(
@@ -369,14 +370,13 @@ dash_layout2 = html.Div(children=[
                                                                                 ,
                                                                                 dbc.Col(
                                                                                     children=[
-                                                                            html.Div([''],className='largespacing'),
                                                                             html.H5('Suspicious Activity'),
                                                                                      ml_layout,
   
                                                                                     ],lg=3,id='ml-filter'
                                                                                 )
                                                                                 ]   
-                                                                        )])]), 
+                                                                        )])])]), 
 
 ###FILTERS DONE*****************************************************************************************
 

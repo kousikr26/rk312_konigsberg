@@ -12,7 +12,8 @@
     margin-bottom: 3%;
     height: 100%;
     padding-bottom: 3%;
-  
+    padding-left: 3%;
+    padding-right: 3%;
 }
 
 #draggable-filters{
@@ -112,3 +113,4 @@
 #to-from-column{
     margin-left: 0%;
 }
+#filter-title
