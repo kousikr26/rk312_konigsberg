@@ -28,7 +28,7 @@ def SumFeatures(df, pivot_identifier, SD_dict):
 
 	return new_df
 
-
+	
 
 def StatisticalAnomalyFinder(df, pivot_identifier, SD_dict): 
 	"""

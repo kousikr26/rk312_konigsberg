@@ -8,6 +8,7 @@ import matplotlib.font_manager
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
+
 df = pd.read_csv('./data/final_data.csv')
 towers=pd.read_csv('./data/towers_min.csv')
 def anomalies(df,algo="IsolationForest",contamination=0.001):
