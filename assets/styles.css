@@ -79,7 +79,7 @@ pre {
     /* background-color: white; */
     border:1px black solid;
     border-radius: 2%;
-    padding: 10px;
+    padding: 0px;
 height: 100%;
 /*  */
 margin-left:2px;
@@ -180,10 +180,15 @@ margin-bottom:60px;
 }
 #sidebar{
     top:0;
-    height:100%;
-    width:2%;
+    height:100vh;
+    width:10%;
+    margin-right: 10%;
     background-color: black;
-    position: fixed; /* Fixed Sidebar (stay in place on scroll) */
+    /* position: relative; */
+    /* Fixed Sidebar (stay in place on scroll) */
+    position: fixed; 
+    display: block;
+    over
   z-index: 1; 
 }
 
@@ -291,6 +296,8 @@ margin-bottom:60px;
 }
 #sidebar>img:hover{
     width: 30px;
+    transform: translateX(-5px);
+   
 }
 #upload-data>div>img:hover{
     width: 30px;

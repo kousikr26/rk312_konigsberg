@@ -42,7 +42,8 @@ from BFSN import bfs
 
 
 ########################################################## Stylesheet ##########################################################
-external_stylesheets = [dbc.themes.SANDSTONE]
+external_stylesheets = [dbc.themes.SANDSTONE,'https://codepen.io/dadamson/pen/vPVxxq.css']
+ 
 
 
 # Load  Data
@@ -382,9 +383,9 @@ def plot_network(df, srs, scs):
 
 
 # 8. The HTML Layout of the App.
-
+#
 # NOTE : All the elements here (visual or statistical) are updated through callbacks as defined in section 9
-app.layout = dash_layout
+app.layout = dash_layout2
 
 #
 
@@ -767,15 +768,15 @@ def ResetFilters(button_reset):
 
 
 @app.callback(
-    [Output(component_id='plot-area', component_property='lg'),
-     Output(component_id='filters', component_property='style')],
+    
+     Output(component_id='filters', component_property='style'),
     [Input('collapse-filters', 'n_clicks')]
 )
 def Zoom(mode):
     if mode!=None and mode%2==1 :
-        return 12, {'display':'none'}
+     {'display':'none'}
     else:
-        return 12, {'display':'block'}
+     {'display':'flex'}
 
 @app.callback(
     Output('radius-div', 'style'),
