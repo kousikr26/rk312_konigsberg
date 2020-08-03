@@ -110,3 +110,7 @@
     max-width: 1200px;
     border:4px solid black;
 }
+#draggable-filters{
+    z-index:1000;
+    position: relative;
+}
