@@ -125,10 +125,11 @@ dash_layout2 = html.Div(children=[
                                                                                                 max_date_allowed=df['Date'].max(),
                                                                                                 initial_visible_month=dt(2020, 6, 5),
                                                                                                 date=str(dt(2020, 6, 17, 0, 0, 0)),
-                                                                                                display_format='DD-MMM-YY'
+                                                                                                display_format='DD-MMM-YY',
+                                                                                                style={'z-index':1000},
+                                                                                                with_portal=True,
                                                                                             )],  # Data Picker
                                                                                             ),
-
                                                                                         dbc.Tooltip(
                                                                                             "Start Date",
                                                                                             target= 'date-picker1',
@@ -145,7 +146,8 @@ dash_layout2 = html.Div(children=[
                                                                                             max_date_allowed=df['Date'].max(),
                                                                                             initial_visible_month=dt(2020, 6, 5),
                                                                                             date=str(dt(2020, 6, 17, 0, 0, 0)),
-                                                                                            display_format='DD-MMM-YY'
+                                                                                            display_format='DD-MMM-YY',
+                                                                                            with_portal=True
                                                                                         ),])],id='from-to-box'),  # Data Picker
                                                                                         
                                                                                         dbc.Tooltip(
@@ -153,8 +155,32 @@ dash_layout2 = html.Div(children=[
                                                                                             target= 'date-picker2',
                                                                                             placement = 'right'
                                                                                         ),
+                                                                                           html.Div([''],className='spacing'),
+                                                                                      html.H5(
+                                                                                                                'Time of Day:'
+                                                                                                                ),
+                                                                                                         
+                                                                                                             # Time Slider
 
-                                                                                ], id='to-from-column',lg=2), 
+                                                                                                            dbc.Tooltip(
+                                                                                                                "Filter on Time of Day",
+                                                                                                                target= 'time-slider',
+                                                                                                                placement = 'right'
+                                                                                                            ),
+                                                                                        dcc.RangeSlider(
+                                                                                                                id='time-slider',
+                                                                                                                min=0,
+                                                                                                                max=48,
+                                                                                                                step=None,
+                                                                                                                marks=times,
+                                                                                                                dots=True,
+                                                                                                                value=[0, 48],
+                                                                                                                pushable=1
+
+                                                                                                            ), 
+
+
+                                                                                ], id='to-from-column',lg=3), 
 
                                                                                 #OKAY
 
@@ -194,27 +220,7 @@ dash_layout2 = html.Div(children=[
                                                                                                 
 
                                                                                                     #dbc.Row(children=[
-                                                                                                            html.H5(
-                                                                                                                'Time of Day:'
-                                                                                                                ),
-                                                                                                            html.Div([''],className='spacing'),
-                                                                                                            dcc.RangeSlider(
-                                                                                                                id='time-slider',
-                                                                                                                min=0,
-                                                                                                                max=48,
-                                                                                                                step=None,
-                                                                                                                marks=times,
-                                                                                                                dots=True,
-                                                                                                                value=[0, 48],
-                                                                                                                pushable=1
-
-                                                                                                            ),  # Time Slider
-
-                                                                                                            dbc.Tooltip(
-                                                                                                                "Filter on Time of Day",
-                                                                                                                target= 'time-slider',
-                                                                                                                placement = 'right'
-                                                                                                            ),
+                                                 
 
 
                                                                                                             html.Div([''],className='largespacing'),
@@ -335,7 +341,7 @@ dash_layout2 = html.Div(children=[
 
 
 #
-                                            dbc.Row(children=[
+                                            html.Div(children=[
                                                        # for network plot wala column
                                                     
                                                                      dash_draggable.dash_draggable(
@@ -351,7 +357,7 @@ dash_layout2 = html.Div(children=[
                                                                                             className='handle',
                                                                                             children=[
 
-                                                    dbc.Col(children=[
+                                                    html.Div(children=[
                                                                        
                                                                     dash_draggable.dash_draggable(
                                                                                     id='draggable-toggle-plot',
@@ -467,7 +473,7 @@ dash_layout2 = html.Div(children=[
                                                                         )])])
 
 
-                                                                     ],id='plot-area',lg=8),
+                                                                     ],id='plot-area'),
                                                                      ])]),     # Network Plot
                                                     
                                                     
@@ -485,7 +491,7 @@ dash_layout2 = html.Div(children=[
                                                                                             id='draggable-stats-div',
                                                                                             className='handle',
                                                                                             children=[
-                                                    dbc.Col(children=[
+                                                    html.Div(children=[
                                                                         dcc.Markdown('# Statistics'),
                                                                         html.Div([ 
                                                                             html.H3('Hover:'),
@@ -567,7 +573,7 @@ dash_layout2 = html.Div(children=[
                                                                           # Selection Data Container
 
 
-                                                                     ],id='stats',lg=4)
+                                                                     ],id='stats')
                                                                                             ])])
 
                                             
