@@ -2,6 +2,7 @@
 import pandas as pd
 import base64
 import io
+#from Crypto.Protocol.KDF import PBKDF2
 import numpy as np
 import json
 import networkx as nx
@@ -24,6 +25,16 @@ import requests
 import dash_draggable
 from math import radians, sin, sqrt, cos, atan2
 from dash_layout import *
+from ml_layout import *
+from datetime import datetime
+
+import numpy as np 
+from scipy import stats 
+import matplotlib.pyplot as plt 
+import matplotlib.font_manager 
+from sklearn.covariance import EllipticEnvelope
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
 ########################################################## Import functions for Breadth First Search ##########################
 from addEdge import addEdge,addEdgemap
 from BFSN import bfs
@@ -176,8 +187,10 @@ def plot_map(filtered_df):
                 lon=77.4126
             ),
             pitch=0,
-            zoom=10
-        )}
+            zoom=10,
+             
+        )},
+       
         
     )
     fig.update_layout(clickmode='event+select') 
@@ -257,6 +270,14 @@ def plot_network(df, srs, scs):
 
     # Reciever Nodes
     df=df[df['Receiver_node']!=-1]
+    selected_callers = []
+    selected_receivers = []
+    if srs != 'None':
+        for p in srs:
+            selected_receivers.append(int(p))
+    if scs != 'None':
+        for p in scs:
+            selected_callers.append(int(p))
     def make_graph(x):
             G.add_edge(x["Caller_node"], x["Receiver_node"])
 
@@ -264,7 +285,7 @@ def plot_network(df, srs, scs):
     pos = nx.nx_agraph.pygraphviz_layout(G)  # Position of Points
 
     edge_trace = [] # Add Edges to Plot
-
+    symbols = []
 ## 7.3. Adds the caller and reciever edge information to each entry. 
     def add_coords(x):
         x0, y0 = pos[x['Caller_node']]
@@ -307,6 +328,12 @@ def plot_network(df, srs, scs):
         hover_list.append(str(node_to_num[node]))
         node_x.append(x)
         node_y.append(y)
+        if node_to_num[node] in selected_callers:
+            symbols.append('x')
+        elif node_to_num[node] in selected_receivers:
+            symbols.append('diamond-cross')
+        else:
+            symbols.append('circle')
         total_duration.append(27*pow((df[(df['Caller_node']==node)|(df['Receiver_node']==node)]['Duration'].sum())/df['Duration'].max(),0.3))
     node_trace = go.Scatter(
         x=node_x, y=node_y,
@@ -317,6 +344,7 @@ def plot_network(df, srs, scs):
         marker=dict(
             size=total_duration,
             showscale=True,
+            symbol=symbols,
             line_width=2,
             line_color='black'))  # Nodes visual design info.
 
@@ -328,7 +356,7 @@ def plot_network(df, srs, scs):
                  
 
                     hovermode='closest',
-                    margin=dict(b=20, l=0, r=0, t=20),
+                    margin=dict(b=0, l=0, r=0, t=0),
                     annotations=[dict(
                         showarrow=True,
                         xref="paper", yref="paper",
@@ -345,8 +373,8 @@ def plot_network(df, srs, scs):
           #Hover-info design.
     )
     fig.update_layout(clickmode='event+select')  # Event method
-    fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1), plot_bgcolor='rgb(255,255,255)')
-    fig.update_layout(height=500)
+    fig.update_layout(yaxis = dict(scaleanchor = "x", scaleratio = 1))
+    fig.update_layout(height=500,plot_bgcolor='rgb(244, 246, 255)')
     return fig
 
 # store layout (after app.layout) in file and try to import that
@@ -371,9 +399,9 @@ sel_lon = 0
     [Output(component_id='filtered-data', component_property='children'),
      Output(component_id='message', component_property='children')],
     [Input('radius-slider', 'value'),Input('upload-data', 'contents'),Input(component_id='date-picker1', component_property='date'),Input(component_id='date-picker2', component_property='date'), Input(component_id='duration-slider', component_property='value'), Input(component_id='time-slider', component_property='value'),
-     Input(component_id='select-caller-receiver', component_property='value'), Input(component_id='caller-dropdown', component_property='value'), Input(component_id='receiver-dropdown', component_property='value')]
+     Input(component_id='select-caller-receiver', component_property='value'), Input(component_id='caller-dropdown', component_property='value'), Input(component_id='receiver-dropdown', component_property='value'),Input(component_id='ml-mode', component_property='value'),Input(component_id='contamination-slider', component_property='value')]
 )
-def update_filtered_div_caller(radius,contents, selected_date1, selected_date2, selected_duration, selected_time, selected_option, selected_caller, selected_receiver):
+def update_filtered_div_caller(radius,contents, selected_date1, selected_date2, selected_duration, selected_time, selected_option, selected_caller, selected_receiver,ml_value,contamination):
     # Date,Time,Duration Filter
     if contents is not None:
         content_type, content_string = contents.split(',')
@@ -432,6 +460,20 @@ def update_filtered_div_caller(radius,contents, selected_date1, selected_date2, 
         if selected_caller != 'None' and selected_receiver != 'None':
             filtered_df = df[((filtered_df['Caller'].isin(list(selected_caller))) & (
                 filtered_df['Receiver'].isin(list(selected_receiver))))].reset_index(drop=True)
+    if ml_value in [1,2,3]:
+        filtered_df=pd.merge(filtered_df,towers[['lat','lon','TowerID']],on='TowerID')
+        filtered_df['Time_new']=pd.to_datetime(filtered_df['Time'],format='%H:%M:%S')
+        filtered_df["Time_new"]=filtered_df["Time_new"].apply(lambda x: (x - x.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds())
+        contamination/=100
+        if (ml_value==1):
+            iso=IsolationForest(contamination=contamination)
+        elif(ml_value==2):
+            iso=EllipticEnvelope(contamination=contamination)
+        elif(ml_value==3):
+            iso=LocalOutlierFactor(contamination=contamination)
+    
+        mask=iso.fit_predict(filtered_df[["Time_new","Duration","lat","lon"]])==-1
+        filtered_df=filtered_df[mask].drop(['lat','lon','Time_new'],axis=1)
     if filtered_df.shape[0] == 0:
         # No update since nothing matches
         return dash.no_update, 'Nothing Matches that Query'
@@ -572,10 +614,10 @@ def display_selected_data(selectedData, filtered_data):
     df = pd.read_json(filtered_data, orient='split')
     # TODO #3 Graph should also be filtered and only nodes in component should be displayed
     if selectedData is not None:
-        l = []
+        global l
         for point in selectedData['points']:
                 l.append(node_to_num[coords_to_node[point['x'], point['y']]])
-        components = bfs(l, df)
+        components = bfs(l, df[df['Receiver']!=20000])
         s = ""
         i = 1
         for component in components:
@@ -759,6 +801,17 @@ def fix_draggability(n_clicks):
     if n_clicks%2 == 1:
         return False, False, False, False, False, False, False
     return True, True, True, True, True, True, True
+@app.callback(
+    [Output('main','style'),Output('content','style')],
+    [Input('login-button','n_clicks'),Input('logout','n_clicks')],
+    [State('username','value'),State('password','value')])
+def login(n_clicks1, n_clicks2, username, password):
+    if (n_clicks2 is None or n_clicks1>n_clicks2) and username == 'Police' and password == 'Indian':
+        return {'display':'none'},{'display':'block'}
+    else:
+        return {'display':'block'},{'display':'none'}
+
+
 ########################################################## Run Server ##########################################################
 server=app.server
 if __name__ == '__main__':
