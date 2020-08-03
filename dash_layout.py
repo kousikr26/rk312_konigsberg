@@ -9,7 +9,7 @@ from dash.dependencies import Input, Output, State
 from datetime import datetime as dt
 import dash_bootstrap_components as dbc
 import dash_draggable
-
+from ml_layout import *
 
 
 df = pd.read_csv('./data/final_data.csv')
@@ -45,7 +45,28 @@ final_ipdr_columns = ["App_name","Total Volume","Date","Time","Duration","Privat
 
 
 dash_layout = html.Div(children=[
+    html.Div(id='bg-image'),
+                        html.Div(
+                        id = 'main',
+                        children=[
+                        html.Div(       id = 'login-page',
+                                children = [
+                                    html.H2('Kindly Login!'),
+                                        html.Div(children=[dcc.Input(id='username',placeholder='Username', type='text', value='',),dcc.Input(id='password',placeholder='Password', type='password', value='')]),
+                                            html.Button('Login', id='login-button')
+                                ]
+                                )
+
+
+                            ]),
+                            html.Div(
+                                id='content',
+                                style={'display':'none'},
+                                children=[
                                 html.Div(children=[
+                                                    html.Img(
+				                                        src='assets/logout.png',width='20px',id='logout', style={'cursor':'pointer'}
+				                                    ),
 				                                    html.Img(
 				                                        src='assets/filter.png',width='20px',id='collapse-filters', style={'cursor':'pointer'}
 				                                    ),
@@ -81,6 +102,16 @@ dash_layout = html.Div(children=[
 				                                     		"Click to upload the database in .csv format",
 				                                     		target='upload-data',
 				                                     		placement='right',
+				                                     	),
+                                                         dbc.Tooltip(
+				                                     		"Logout",
+				                                     		target='logout',
+				                                     		placement='right',
+				                                     	),
+                                                         dbc.Tooltip(
+				                                     		"Toggle Draggable or not.",
+				                                     		target='fix-button',
+				                                     		placement='right',
 				                                     	)
                                     
                                 				],id='sidebar'),
@@ -91,7 +122,7 @@ dash_layout = html.Div(children=[
                                                     html.H1('CDR Analyser'),],id='header-title'), # TITLE BOLDED, for more 'oompf'.
                                                     html.Br(),
                                                     html.Div([
-                                                    html.I('Welcome back officer, You can analyse the phone calls and internet activity of people'),  # Subtitle
+                                                    # html.I('Welcome back officer, You can analyse the phone calls and internet activity of people'),  # Subtitle
                                                   
                                                     html.H4(id='message')],id='header-subtitle'),  # Message
                                                   ],id='header-text'),
@@ -271,6 +302,7 @@ dash_layout = html.Div(children=[
 
 
                                                                         html.Div([''],className='largespacing'),
+                                                                        ml_layout,
   
                                                                         html.Div([
                                                                         dcc.Slider(
@@ -542,4 +574,5 @@ dash_layout = html.Div(children=[
                                     style={'display': 'none'}
                                         ), # Filtered Data
     
-                                ]) #End of app.layout
+                                ])]) #End of app.layout
+
