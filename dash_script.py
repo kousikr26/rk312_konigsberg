@@ -49,6 +49,7 @@ external_stylesheets = [dbc.themes.SANDSTONE]
 df = pd.read_csv('./data/final_data.csv')
 #df2 = pd.read_csv('./data/ipdr_data.csv')
 towers=pd.read_csv('./data/towers_min.csv') #Data for Cell Towers
+towers_add = pd.read_csv('./data/towers_final.csv')
 tower_mean=df.groupby(['TowerID'])['Duration'].mean()
 tower_std=df.groupby(['TowerID'])['Duration'].std()
 #### Create App ###
@@ -516,10 +517,7 @@ def display_hover_data(hoverData, filtered_data,hoverDataMap):
     if hoverDataMap is not None:
     
         cur_lat,cur_lon=hoverDataMap['points'][0]['lat'],hoverDataMap['points'][0]['lon']
-        req_json = requests.get('https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&zoom=18&addressdetails=1'.format(
-                lat=cur_lat, lon=cur_lon)).json()
-        add_string = ""
-        add_string +=" ,".join(req_json['address'].values())
+        add_string = towers_add[(towers_add['lat']==cur_lat) & (towers_add['lon']==cur_lon)]['Address']
         return add_string
     return "Hover data..."
 
