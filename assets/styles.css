@@ -4,12 +4,28 @@
     font-size: medium;
     color:#2d334a;
 }
+:root {
+    --body-background: #fffffe;
+    --div-background:#f4f6ff;
+}
 body {
     /* background-size: 20px 20px; */
     /* background-image:url('./background.jpg'); */
       /* background-image: linear-gradient(to bottom right, #74ebd5,#acb6e5); */
-    background-color: #fffffe;
+    background-color: var(--body-background);
   }
+  #bg-image {
+    background-image: url('./bg_1.jpg');
+    filter: blur(3px);
+    height: 999px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    z-index: -1;
+    position: fixed;
+    width: 2000px;
+    top: 0px;
+}
 h1,h2{
 font-weight: 500;
 color: #272343;
@@ -17,7 +33,7 @@ color: #272343;
 }
 h3,h4{
     font-weight: 300;
-    color: #2d334a;
+    color: white;
 }
 h5.h6,p,pre{
     font-weight: 200;
@@ -27,9 +43,9 @@ pre {
     overflow-x: scroll;
     font-family: 'Montserrat';
 }
-#header-title h1{
+/* #header-title h1{
     margin-left: 100%;
-}
+} */
 #message{
     background-color:purple;
     color:white;
@@ -37,7 +53,7 @@ pre {
     text-align:center;
     padding: 5px;
     display: inline;
-    margin-left: 56%;
+    margin-left: 96%;
 }
 #header-subtitle{
     display: inline;
@@ -68,6 +84,7 @@ height: 100%;
 /*  */
 margin-left:2px;
 max-width: 100%;
+background-color:var(--div-background);
 }
 .rc-slider-mark{
     margin-top:10px;
@@ -83,13 +100,13 @@ max-width: 100%;
 
 }
 #plot-area{
-    /* background-color: white; */
+    /* background-color: #e4e3e3; */
     /* border:1px black solid; 
     border-left: 0px;
     border-right:0px; */
 } 
 
-}
+
 h5{
     margin-top: 10px;
 }
@@ -98,17 +115,7 @@ margin-right: 0%;
 margin-left: 4%;
 }
 
-#upload-data{
-    width: 100%;
-    height: 60px;
-    line-height: 60px;
-    border-width: 1px;
-    border-style: dashed;
-    border-radius: 5px;
-    text-align: center;
-    margin-bottom:12px;
-    margin-top:36em;
-}
+
 #toggle-components{
     width: 15%;
     height: 40px;
@@ -179,20 +186,12 @@ margin-bottom:60px;
     position: fixed; /* Fixed Sidebar (stay in place on scroll) */
   z-index: 1; 
 }
-#sidebar >img:nth-child(1){
-    margin-top: 16em;
-    margin-left: 10%;
 
-}
-#sidebar >img:nth-child(2){
-    margin-top: 20em;
-    margin-left: 10%;
-}
 #network-plot-div{
     border:1px black solid;
     padding:2px;
     border-radius: 2%;
-
+    background-color: var(--div-background);
     margin-bottom: 10px;
 }
 #network-plot-div:hover{
@@ -214,9 +213,9 @@ margin-bottom:60px;
     overflow-y: scroll;
 }
 #movement-div{
-    border: 1px solid black;
+    /* border: 1px solid black; */
     border-radius: 2%;
-
+    /* background-color: var(--div-background); */
     margin-bottom: 20px;
     padding:2px;
 }
@@ -235,8 +234,8 @@ margin-bottom:60px;
 }
 #stats{
     border: 2px solid black;
-    border-radius: 4%;
-
+    /* border-radius: 4%; */
+    background-color:var(--div-background);
     margin-bottom: 20px;
     padding:2px;
     height:80vh;
@@ -247,7 +246,7 @@ margin-bottom:60px;
 #stats:hover{
     box-shadow: -5px 5px 3px black;
 }
-input:hover{
+#filters> input:hover{
    background-color:  #6246ea;
    color:white;
 }
@@ -261,4 +260,62 @@ input:hover{
 }
 #stats>div:nth-child(-n+3){
     border-bottom:1px solid black ;
+}
+#collapse-filters{
+    margin-top: 10em;
+    margin-left: 10%;
+
+}
+#reset-button{
+    margin-top: 10em;
+    margin-left: 10%;
+}
+#fix-button{
+    background-color: white;
+    margin-left: 10%;
+    margin-top: 10em;
+}
+#logout{
+    margin-top: 5em;
+}
+#upload-data{
+    width: 100%;
+    height: 60px;
+    line-height: 60px;
+    /* border-width: 1px;
+    border-style: dashed;
+    border-radius: 5px; */
+    text-align: center;
+    margin-bottom:12px;
+    margin-top:10em;
+}
+#sidebar>img:hover{
+    width: 30px;
+}
+#upload-data>div>img:hover{
+    width: 30px;
+}
+#login-page{
+    position: fixed;
+    margin-left: 40%;
+    margin-right: 40%;
+    margin-top: 20%;
+    padding:100px;
+    border: 1px dashed black;
+    border-radius: 4%;
+    text-align: center;
+    background-color: var(--div-background);
+}
+#login-page>div>input{
+    margin-bottom: 4%;
+}
+#login-page>h2{
+    margin-bottom: 10px;
+}
+#login-button{
+   width:50px;
+   height: 30px;
+   border:1px solid black;
+   border-radius: 7%;
+   
 }
