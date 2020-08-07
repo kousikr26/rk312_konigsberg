@@ -5,7 +5,8 @@
 - Call data records and Internet protocol data records are represented as directed graphs
 - Various filtering options that can be combined to provide a detailed analysis of the data
 - Predictive filtering using machine learning methods such as Isolation forests
-
+- Location plots overlay location history on a map
+- Tower plot shows anamolous activities on each tower by varying node size
 
 
 ### Usage
